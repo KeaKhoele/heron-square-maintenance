@@ -1,0 +1,209 @@
+/* Comprehensive Mobile Compatibility CSS */
+/* Works for iPhone, Samsung, Huawei, and all mobile devices */
+
+/* Reset and base mobile styles */
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Fix for iOS Safari viewport height issues */
+@supports (-webkit-touch-callout: none) {
+  html, body {
+    height: -webkit-fill-available;
+  }
+  
+  .min-h-screen, .h-screen {
+    min-height: -webkit-fill-available;
+    height: -webkit-fill-available;
+  }
+}
+
+/* Fix for Android viewport issues */
+@supports not (-webkit-touch-callout: none) {
+  html, body {
+    height: 100vh;
+    height: 100dvh; /* Dynamic viewport height for modern browsers */
+  }
+  
+  .min-h-screen, .h-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+/* Universal mobile input fixes */
+input, textarea, select, button {
+  font-size: 16px !important; /* Prevents zoom on iOS */
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 0;
+  outline: none;
+  border: none;
+  background: transparent;
+}
+
+/* Touch-friendly button sizes */
+button, input[type="button"], input[type="submit"], input[type="reset"] {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 12px 16px;
+}
+
+/* Mobile form improvements */
+input[type="email"], input[type="text"], input[type="password"], textarea, select {
+  min-height: 44px;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: white;
+  width: 100%;
+  display: block;
+}
+
+/* Mobile-specific flexbox fixes */
+.flex {
+  display: -webkit-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.flex-col {
+  -webkit-box-orient: vertical;
+  -webkit-box-direction: normal;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+
+.items-center {
+  -webkit-box-align: center;
+  -webkit-align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+.justify-center {
+  -webkit-box-pack: center;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+}
+
+/* Mobile grid fixes */
+.grid {
+  display: -webkit-box;
+  display: -webkit-grid;
+  display: -ms-grid;
+  display: grid;
+}
+
+/* Mobile spacing fixes */
+.p-4 { padding: 16px !important; }
+.p-6 { padding: 24px !important; }
+.p-8 { padding: 32px !important; }
+.m-4 { margin: 16px !important; }
+.m-6 { margin: 24px !important; }
+.m-8 { margin: 32px !important; }
+
+/* Mobile text sizing */
+.text-sm { font-size: 14px !important; }
+.text-base { font-size: 16px !important; }
+.text-lg { font-size: 18px !important; }
+.text-xl { font-size: 20px !important; }
+.text-2xl { font-size: 24px !important; }
+.text-3xl { font-size: 30px !important; }
+
+/* Mobile color fixes */
+.bg-white { background-color: white !important; }
+.bg-gray-50 { background-color: #f9fafb !important; }
+.bg-blue-600 { background-color: #2563eb !important; }
+.text-white { color: white !important; }
+.text-gray-900 { color: #111827 !important; }
+.text-gray-600 { color: #4b5563 !important; }
+
+/* Mobile border fixes */
+.border { border: 1px solid #d1d5db !important; }
+.border-gray-300 { border-color: #d1d5db !important; }
+.rounded { border-radius: 6px !important; }
+.rounded-lg { border-radius: 8px !important; }
+
+/* Mobile shadow fixes */
+.shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important; }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important; }
+
+/* Mobile-specific responsive utilities */
+@media (max-width: 640px) {
+  .container {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  
+  .text-2xl {
+    font-size: 20px !important;
+  }
+  
+  .text-3xl {
+    font-size: 24px !important;
+  }
+}
+
+/* Fix for Huawei and other Android devices */
+@supports (-webkit-touch-callout: none) {
+  /* iOS specific */
+} @supports not (-webkit-touch-callout: none) {
+  /* Android specific */
+  html, body {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+/* Universal mobile fixes for all devices */
+.min-h-screen {
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  min-height: -webkit-fill-available !important;
+}
+
+.h-screen {
+  height: 100vh !important;
+  height: 100dvh !important;
+  height: -webkit-fill-available !important;
+}
+
+/* Mobile scrolling improvements */
+body {
+  -webkit-overflow-scrolling: touch;
+  overflow-scrolling: touch;
+}
+
+/* Fix for mobile Safari address bar issues */
+@supports (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+}
+
+/* Fix for mobile Chrome and other browsers */
+@supports not (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
