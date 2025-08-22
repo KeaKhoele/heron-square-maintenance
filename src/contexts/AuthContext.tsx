@@ -53,6 +53,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const actionCodeSettings = {
         url: window.location.origin + '/dashboard',
         handleCodeInApp: true,
+        iOS: {
+          bundleId: 'com.heronsquare.maintenance'
+        },
+        android: {
+          packageName: 'com.heronsquare.maintenance',
+          installApp: true
+        },
+        dynamicLinkDomain: undefined
       };
       
       console.log('Action code settings:', actionCodeSettings);

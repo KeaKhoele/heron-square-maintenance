@@ -53,7 +53,7 @@ const CREW_MEMBERS: CrewMember[] = [
     accessLevel: AccessLevel.PRIMARY_CREW,
     name: 'Kea Khoele',
     addedBy: 'system',
-    addedDate: new Date().toISOString()
+    addedDate: '2024-08-17T18:00:00.000Z' // Fixed date instead of new Date()
   }
   // More crew members will be added dynamically
 ];
