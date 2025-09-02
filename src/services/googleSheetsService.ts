@@ -3,7 +3,7 @@ import { Issue } from '../types/Issue';
 // Google Sheets API configuration
 const GOOGLE_SHEETS_API_KEY = process.env.REACT_APP_GOOGLE_SHEETS_API_KEY;
 const SPREADSHEET_ID = process.env.REACT_APP_GOOGLE_SPREADSHEET_ID;
-const SHEET_NAME = 'Maintenance Issues';
+const SHEET_NAME = 'Heron Square Maintenance';
 
 // Google Sheets API endpoints
 const GOOGLE_SHEETS_BASE_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -65,17 +65,17 @@ export class GoogleSheetsService {
 
       // Convert rows to issues (skip header row)
       const issues: Issue[] = rows.slice(1).map((row: any[]) => ({
-        id: row[0] || '',
-        timestamp: row[1] || new Date().toISOString(),
-        name: row[2] || '',
-        address: row[3] || '',
-        unit: row[4] || '',
-        category: (row[5] as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General') || 'General',
-        issueType: row[6] || '',
-        description: row[7] || '',
-        urgency: (row[8] as 'High' | 'Medium' | 'Low') || 'Medium',
-        status: (row[9] as 'New' | 'In Process' | 'Complete') || 'New',
-        userEmail: row[10] || ''
+        id: row[0] || Date.now().toString(),
+        timestamp: row[8] || new Date().toISOString(), // Date and Time column
+        name: row[5] || '', // Tenant Name column
+        address: row[3] || '', // Property Address column
+        unit: row[4] || '', // Unit Number column
+        category: (row[0] as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General') || 'General', // Issue Category column
+        issueType: row[1] || '', // Issue Type column
+        description: row[2] || '', // Issue Description column
+        urgency: (row[6] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
+        status: (row[7] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
+        userEmail: row[9] || '' // We'll need to add this column or derive from tenant name
       }));
 
       // Update cache
@@ -104,17 +104,16 @@ export class GoogleSheetsService {
         // Try to add to Google Sheets
         const headers = await this.initializeHeaders();
         const rowData = [
-          newIssue.id,
-          newIssue.timestamp,
-          newIssue.name,
-          newIssue.address,
-          newIssue.unit,
-          newIssue.category,
-          newIssue.issueType,
-          newIssue.description,
-          newIssue.urgency,
-          newIssue.status,
-          newIssue.userEmail
+          newIssue.category, // Issue Category
+          newIssue.issueType, // Issue Type
+          newIssue.description, // Issue Description
+          newIssue.address, // Property Address
+          newIssue.unit, // Unit Number
+          newIssue.name, // Tenant Name
+          newIssue.urgency, // Urgency
+          newIssue.status, // Status
+          newIssue.timestamp, // Date and Time
+          newIssue.userEmail // User Email
         ];
 
         const response = await fetch(
@@ -178,7 +177,7 @@ export class GoogleSheetsService {
         const headers = await this.initializeHeaders();
         
         const response = await fetch(
-          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${SHEET_NAME}!K${rowNumber}?valueInputOption=RAW&key=${GOOGLE_SHEETS_API_KEY}`,
+          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${SHEET_NAME}!H${rowNumber}?valueInputOption=RAW&key=${GOOGLE_SHEETS_API_KEY}`,
           {
             method: 'PUT',
             headers,
