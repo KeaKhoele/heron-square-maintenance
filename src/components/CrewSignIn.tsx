@@ -60,10 +60,10 @@ const CrewSignIn: React.FC = () => {
       console.log('Crew member authenticated:', crewMember);
       console.log('Stored in localStorage and sessionStorage, navigating to /admin...');
       
-      // Small delay to ensure context updates, then navigate
+      // Longer delay for mobile to ensure context updates
       setTimeout(() => {
         navigate('/admin', { replace: true });
-      }, 100);
+      }, 300);
       
     } catch (error: any) {
       console.error('Error during crew authentication:', error);

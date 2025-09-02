@@ -6,6 +6,8 @@ interface IssueFormData {
   name: string;
   address: string;
   unit: string;
+  category: 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General';
+  issueType: string;
   description: string;
   urgency: 'High' | 'Medium' | 'Low';
   userEmail: string;
@@ -47,12 +49,22 @@ const ADDRESSES = {
   '5 Station Road': 21,
 };
 
+const ISSUE_CATEGORIES = {
+  Plumbing: ['Leaking tap/faucet', 'Blocked drain', 'Toilet not flushing', 'Burst pipe'],
+  Electrical: ['Power outage in unit', 'Faulty light/switch', 'Broken socket/plug', 'Tripping circuit'],
+  Appliances: ['Stove not working', 'Oven not heating', 'Fridge not cooling', 'Washing machine/dryer fault'],
+  Structural: ['Wall crack', 'Ceiling leak/damp', 'Broken window/door', 'Roof leak'],
+  General: ['Pest infestation', 'Security concern (lock, gate, alarm)', 'Noise complaint', 'Other']
+} as const;
+
 const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
   const { currentUser } = useAuth();
   const [formData, setFormData] = useState<IssueFormData>({
     name: '',
     address: '',
     unit: '',
+    category: 'General',
+    issueType: '',
     description: '',
     urgency: 'Medium',
     userEmail: currentUser?.email || ''
@@ -65,19 +77,18 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
     }
   }, [currentUser?.email]);
 
-  const [errors, setErrors] = useState<Partial<IssueFormData>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof IssueFormData, string>>>({});
   const [loading, setLoading] = useState(false);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<IssueFormData> = {};
+    const newErrors: Partial<Record<keyof IssueFormData, string>> = {};
     
     if (!formData.name.trim()) newErrors.name = 'Name is required';
     if (!formData.address) newErrors.address = 'Address is required';
     if (!formData.unit) newErrors.unit = 'Unit is required';
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
-    if (formData.description.trim().length > 30) {
-      newErrors.description = 'Description cannot exceed 30 characters';
-    }
+    if (!formData.category) newErrors.category = 'Category is required';
+    if (!formData.issueType) newErrors.issueType = 'Issue type is required';
+    // Description is now optional, so no validation needed
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -164,25 +175,62 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Issue Category *</label>
+            <select
+              value={formData.category}
+              onChange={(e) => {
+                setFormData(prev => ({ 
+                  ...prev, 
+                  category: e.target.value as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General',
+                  issueType: '' // Reset issue type when category changes
+                }));
+              }}
+              className={`w-full px-3 py-2 border rounded-md ${errors.category ? 'border-red-300' : 'border-gray-300'}`}
+            >
+              <option value="">Select category</option>
+              {Object.keys(ISSUE_CATEGORIES).map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+            {errors.category && <p className="text-sm text-red-600">{errors.category}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Issue Type *</label>
+            <select
+              value={formData.issueType}
+              onChange={(e) => setFormData(prev => ({ ...prev, issueType: e.target.value }))}
+              disabled={!formData.category}
+              className={`w-full px-3 py-2 border rounded-md ${errors.issueType ? 'border-red-300' : 'border-gray-300'}`}
+            >
+              <option value="">Select issue type</option>
+              {formData.category && ISSUE_CATEGORIES[formData.category as keyof typeof ISSUE_CATEGORIES].map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+            {errors.issueType && <p className="text-sm text-red-600">{errors.issueType}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
             <textarea
               rows={4}
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               className={`w-full px-3 py-2 border rounded-md ${errors.description ? 'border-red-300' : 'border-gray-300'}`}
-              placeholder="Describe the issue..."
+              placeholder="Additional details about the issue (optional)..."
             />
             {errors.description && (
               <p className="mt-1 text-sm text-red-600">{errors.description}</p>
             )}
             <div className="mt-1 flex justify-between items-center">
               <p className="text-sm text-gray-500">
-                Maximum 30 characters. Be as detailed as possible.
+                Maximum 50 characters. Additional details are optional.
               </p>
               <span className={`text-sm font-medium ${
-                formData.description.length <= 30 ? 'text-green-600' : 'text-red-600'
+                formData.description.length <= 50 ? 'text-green-600' : 'text-red-600'
               }`}>
-                {formData.description.length}/30 characters
+                {formData.description.length}/50 characters
               </span>
             </div>
           </div>

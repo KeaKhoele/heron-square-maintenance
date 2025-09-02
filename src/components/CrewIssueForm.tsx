@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { useAccessControl } from '../contexts/AccessControlContext';
 
 interface CrewIssueFormData {
   crewName: string;
+  crewEmail: string;
   address: string;
   unit: string;
+  category: 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General';
+  issueType: string;
   description: string;
   urgency: 'High' | 'Medium' | 'Low';
-  crewEmail: string;
 }
 
 interface CrewIssueFormProps {
@@ -47,41 +48,39 @@ const ADDRESSES = {
   '5 Station Road': 21,
 };
 
+const ISSUE_CATEGORIES = {
+  Plumbing: ['Leaking tap/faucet', 'Blocked drain', 'Toilet not flushing', 'Burst pipe'],
+  Electrical: ['Power outage in unit', 'Faulty light/switch', 'Broken socket/plug', 'Tripping circuit'],
+  Appliances: ['Stove not working', 'Oven not heating', 'Fridge not cooling', 'Washing machine/dryer fault'],
+  Structural: ['Wall crack', 'Ceiling leak/damp', 'Broken window/door', 'Roof leak'],
+  General: ['Pest infestation', 'Security concern (lock, gate, alarm)', 'Noise complaint', 'Other']
+} as const;
+
 const CrewIssueForm: React.FC<CrewIssueFormProps> = ({ onSubmit, onClose }) => {
-  const { crewSession } = useAccessControl();
   const [formData, setFormData] = useState<CrewIssueFormData>({
-    crewName: crewSession?.name || '',
+    crewName: '',
+    crewEmail: '',
     address: '',
     unit: '',
+    category: 'General',
+    issueType: '',
     description: '',
-    urgency: 'Medium',
-    crewEmail: crewSession?.email || ''
+    urgency: 'Medium'
   });
 
-  // Update crew info when crewSession changes
-  useEffect(() => {
-    if (crewSession) {
-      setFormData(prev => ({ 
-        ...prev, 
-        crewName: crewSession.name || '',
-        crewEmail: crewSession.email || ''
-      }));
-    }
-  }, [crewSession]);
-
-  const [errors, setErrors] = useState<Partial<CrewIssueFormData>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof CrewIssueFormData, string>>>({});
   const [loading, setLoading] = useState(false);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<CrewIssueFormData> = {};
+    const newErrors: Partial<Record<keyof CrewIssueFormData, string>> = {};
     
     if (!formData.crewName.trim()) newErrors.crewName = 'Crew name is required';
+    if (!formData.crewEmail.trim()) newErrors.crewEmail = 'Crew email is required';
     if (!formData.address) newErrors.address = 'Address is required';
     if (!formData.unit) newErrors.unit = 'Unit is required';
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
-    if (formData.description.trim().length > 30) {
-      newErrors.description = 'Description cannot exceed 30 characters';
-    }
+    if (!formData.category) newErrors.category = 'Category is required';
+    if (!formData.issueType) newErrors.issueType = 'Issue type is required';
+    // Description is now optional, so no validation needed
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -90,16 +89,14 @@ const CrewIssueForm: React.FC<CrewIssueFormProps> = ({ onSubmit, onClose }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form before submission
     if (!validateForm()) {
-      console.log('Form validation failed, not submitting');
-      return; // Stop submission if validation fails
+      return;
     }
 
     try {
       setLoading(true);
       await onSubmit(formData);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error submitting crew issue:', error);
     } finally {
       setLoading(false);
@@ -107,157 +104,152 @@ const CrewIssueForm: React.FC<CrewIssueFormProps> = ({ onSubmit, onClose }) => {
   };
 
   const generateUnits = (address: string) => {
-    const unitCount = ADDRESSES[address as keyof typeof ADDRESSES] || 0;
-    const units = [];
-    for (let i = 1; i <= unitCount; i++) {
-      units.push(i.toString());
-    }
-    return units;
+    const count = ADDRESSES[address as keyof typeof ADDRESSES] || 0;
+    return Array.from({ length: count }, (_, i) => `Unit ${i + 1}`);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Submit Maintenance Issue (Crew)
-          </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-6 w-6" />
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-medium text-gray-900">Submit Crew Issue</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Crew Name */}
-            <div>
-              <label htmlFor="crewName" className="block text-sm font-medium text-gray-700 mb-2">
-                Crew Name and Surname *
-              </label>
-              <input
-                type="text"
-                id="crewName"
-                value={formData.crewName}
-                onChange={(e) => setFormData(prev => ({ ...prev, crewName: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Enter crew member name"
-              />
-              {errors.crewName && (
-                <p className="mt-1 text-sm text-red-600">{errors.crewName}</p>
-              )}
-            </div>
-
-            {/* Address */}
-            <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
-                Address *
-              </label>
-              <select
-                id="address"
-                value={formData.address}
-                onChange={(e) => {
-                  setFormData(prev => ({ ...prev, address: e.target.value, unit: '' }));
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select an address</option>
-                {Object.keys(ADDRESSES).map((address) => (
-                  <option key={address} value={address}>
-                    {address}
-                  </option>
-                ))}
-              </select>
-              {errors.address && (
-                <p className="mt-1 text-sm text-red-600">{errors.address}</p>
-              )}
-            </div>
-
-            {/* Unit */}
-            <div>
-              <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-2">
-                Unit *
-              </label>
-              <select
-                id="unit"
-                value={formData.unit}
-                onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                disabled={!formData.address}
-              >
-                <option value="">Select a unit</option>
-                {formData.address && generateUnits(formData.address).map((unit) => (
-                  <option key={unit} value={unit}>
-                    Unit {unit}
-                  </option>
-                ))}
-              </select>
-              {errors.unit && (
-                <p className="mt-1 text-sm text-red-600">{errors.unit}</p>
-              )}
-            </div>
-
-            {/* Urgency */}
-            <div>
-              <label htmlFor="urgency" className="block text-sm font-medium text-gray-700 mb-2">
-                Urgency Level *
-              </label>
-              <select
-                id="urgency"
-                value={formData.urgency}
-                onChange={(e) => setFormData(prev => ({ ...prev, urgency: e.target.value as 'High' | 'Medium' | 'Low' }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Crew Member Name *</label>
+            <input
+              type="text"
+              value={formData.crewName}
+              onChange={(e) => setFormData(prev => ({ ...prev, crewName: e.target.value }))}
+              className={`w-full px-3 py-2 border rounded-md ${errors.crewName ? 'border-red-300' : 'border-gray-300'}`}
+              placeholder="Your name"
+            />
+            {errors.crewName && <p className="text-sm text-red-600">{errors.crewName}</p>}
           </div>
 
-          {/* Description */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-              Issue Description *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Crew Email *</label>
+            <input
+              type="email"
+              value={formData.crewEmail}
+              onChange={(e) => setFormData(prev => ({ ...prev, crewEmail: e.target.value }))}
+              className={`w-full px-3 py-2 border rounded-md ${errors.crewEmail ? 'border-red-300' : 'border-gray-300'}`}
+              placeholder="your.email@example.com"
+            />
+            {errors.crewEmail && <p className="text-sm text-red-600">{errors.crewEmail}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
+            <select
+              value={formData.address}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, address: e.target.value, unit: '' }));
+              }}
+              className={`w-full px-3 py-2 border rounded-md ${errors.address ? 'border-red-300' : 'border-gray-300'}`}
+            >
+              <option value="">Select address</option>
+              {Object.keys(ADDRESSES).map((address) => (
+                <option key={address} value={address}>{address}</option>
+              ))}
+            </select>
+            {errors.address && <p className="text-sm text-red-600">{errors.address}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Unit *</label>
+            <select
+              value={formData.unit}
+              onChange={(e) => setFormData(prev => ({ ...prev, unit: e.target.value }))}
+              disabled={!formData.address}
+              className={`w-full px-3 py-2 border rounded-md ${errors.unit ? 'border-red-300' : 'border-gray-300'}`}
+            >
+              <option value="">Select unit</option>
+              {formData.address && generateUnits(formData.address).map((unit) => (
+                <option key={unit} value={unit}>{unit}</option>
+              ))}
+            </select>
+            {errors.unit && <p className="text-sm text-red-600">{errors.unit}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Issue Category *</label>
+            <select
+              value={formData.category}
+              onChange={(e) => {
+                setFormData(prev => ({ 
+                  ...prev, 
+                  category: e.target.value as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General',
+                  issueType: '' // Reset issue type when category changes
+                }));
+              }}
+              className={`w-full px-3 py-2 border rounded-md ${errors.category ? 'border-red-300' : 'border-gray-300'}`}
+            >
+              <option value="">Select category</option>
+              {Object.keys(ISSUE_CATEGORIES).map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+            {errors.category && <p className="text-sm text-red-600">{errors.category}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Issue Type *</label>
+            <select
+              value={formData.issueType}
+              onChange={(e) => setFormData(prev => ({ ...prev, issueType: e.target.value }))}
+              disabled={!formData.category}
+              className={`w-full px-3 py-2 border rounded-md ${errors.issueType ? 'border-red-300' : 'border-gray-300'}`}
+            >
+              <option value="">Select issue type</option>
+              {formData.category && ISSUE_CATEGORIES[formData.category as keyof typeof ISSUE_CATEGORIES].map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+            {errors.issueType && <p className="text-sm text-red-600">{errors.issueType}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Issue Description (Optional)</label>
             <textarea
-              id="description"
               rows={4}
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Describe the maintenance issue in detail..."
+              className={`w-full px-3 py-2 border rounded-md ${errors.description ? 'border-red-300' : 'border-gray-300'}`}
+              placeholder="Additional details about the issue (optional)..."
             />
-            {errors.description && (
-              <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-            )}
-            <div className="mt-1 flex justify-between items-center">
-              <p className="text-sm text-gray-500">
-                Maximum 30 characters. Be as detailed as possible.
-              </p>
-              <span className={`text-sm font-medium ${
-                formData.description.length <= 30 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {formData.description.length}/30 characters
-              </span>
-            </div>
+            {errors.description && <p className="text-sm text-red-600">{errors.description}</p>}
           </div>
 
-          {/* Submit Button */}
-          <div className="flex justify-end space-x-3 pt-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Urgency Level *</label>
+            <select
+              value={formData.urgency}
+              onChange={(e) => setFormData(prev => ({ ...prev, urgency: e.target.value as 'High' | 'Medium' | 'Low' }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md"
+            >
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+
+          <div className="flex space-x-3 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {loading ? 'Submitting...' : 'Submit Issue'}
             </button>

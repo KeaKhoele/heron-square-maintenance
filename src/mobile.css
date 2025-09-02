@@ -207,3 +207,175 @@ body {
     min-height: 100dvh;
   }
 }
+
+/* Mobile Portrait Mode Fixes */
+@media screen and (orientation: portrait) and (max-width: 768px) {
+  /* iPhone portrait specific fixes */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Ensure content fits in portrait mode */
+  .container {
+    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  /* Better spacing for portrait */
+  .space-y-8 > * + * {
+    margin-top: 1.5rem;
+  }
+  
+  .space-y-6 > * + * {
+    margin-top: 1rem;
+  }
+  
+  /* Adjust form layouts for portrait */
+  .max-w-md {
+    max-width: 100%;
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+  
+  /* Better button sizing for portrait */
+  .w-full {
+    width: 100%;
+  }
+  
+  /* Ensure text is readable on small screens */
+  .text-3xl {
+    font-size: 1.875rem;
+  }
+  
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+  
+  .text-lg {
+    font-size: 1.125rem;
+  }
+}
+
+/* iPhone Specific Fixes */
+@supports (-webkit-touch-callout: none) {
+  /* iPhone Safari specific */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Fix iPhone viewport issues */
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Better iPhone form handling */
+  input, select, textarea {
+    font-size: 16px !important;
+    -webkit-appearance: none;
+    border-radius: 0;
+  }
+}
+
+/* iPhone Portrait Mode - Aggressive Fixes */
+@media screen and (max-width: 428px) and (orientation: portrait) {
+  /* iPhone 12/13/14 Pro Max and similar */
+  * {
+    box-sizing: border-box;
+  }
+  
+  body, html {
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    position: relative;
+  }
+  
+  .App {
+    width: 100vw;
+    height: 100vh;
+    height: -webkit-fill-available;
+    overflow-x: hidden;
+  }
+  
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  /* Force full width on all containers */
+  .container, .max-w-md, .max-w-lg, .max-w-xl, .max-w-2xl, .max-w-3xl, .max-w-4xl, .max-w-5xl, .max-w-6xl, .max-w-7xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  
+  /* Ensure forms fit */
+  form {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* Force buttons to full width */
+  button, .btn, [type="button"], [type="submit"] {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  /* Adjust text sizes for small screens */
+  .text-3xl { font-size: 1.5rem !important; }
+  .text-2xl { font-size: 1.25rem !important; }
+  .text-xl { font-size: 1.125rem !important; }
+  .text-lg { font-size: 1rem !important; }
+  
+  /* Better spacing for small screens */
+  .space-y-8 > * + * { margin-top: 1rem !important; }
+  .space-y-6 > * + * { margin-top: 0.75rem !important; }
+  .space-y-4 > * + * { margin-top: 0.5rem !important; }
+  
+  /* Ensure inputs fit */
+  input, select, textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 16px !important;
+  }
+  
+  /* Fix padding issues */
+  .p-8 { padding: 1rem !important; }
+  .p-6 { padding: 0.75rem !important; }
+  .p-4 { padding: 0.5rem !important; }
+  
+  /* Fix margin issues */
+  .m-8 { margin: 1rem !important; }
+  .m-6 { margin: 0.75rem !important; }
+  .m-4 { margin: 0.5rem !important; }
+}
+
+/* iPhone Safari Specific Overrides */
+@supports (-webkit-touch-callout: none) {
+  body {
+    -webkit-text-size-adjust: 100%;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  .App {
+    width: 100vw;
+    height: 100vh;
+    height: -webkit-fill-available;
+    overflow-x: hidden;
+  }
+  
+  /* Force viewport fitting */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+}

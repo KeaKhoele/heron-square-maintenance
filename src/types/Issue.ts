@@ -3,6 +3,8 @@ export interface Issue {
   name: string;
   address: string;
   unit: string;
+  category: 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General';
+  issueType: string;
   description: string;
   urgency: 'High' | 'Medium' | 'Low';
   status: 'New' | 'In Process' | 'Complete';
@@ -14,6 +16,8 @@ export interface IssueFormData {
   name: string;
   address: string;
   unit: string;
+  category: 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General';
+  issueType: string;
   description: string;
   urgency: 'High' | 'Medium' | 'Low';
   userEmail: string;

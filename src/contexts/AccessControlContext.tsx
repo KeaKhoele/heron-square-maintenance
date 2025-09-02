@@ -68,22 +68,27 @@ export function AccessControlProvider({ children }: AccessControlProviderProps) 
 
   // Check for existing crew session on mount
   useEffect(() => {
+    // Try localStorage first
     const storedCrewMember = localStorage.getItem('crewMember');
     console.log('Checking for stored crew member:', storedCrewMember);
+    
     if (storedCrewMember) {
       try {
         const crewMember = JSON.parse(storedCrewMember);
-        console.log('Setting crew session:', crewMember);
+        console.log('Setting crew session from localStorage:', crewMember);
         setCrewSession(crewMember);
+        // Also sync to sessionStorage for mobile compatibility
+        sessionStorage.setItem('crewMember', storedCrewMember);
+        return; // Exit early if we found a valid crew member
       } catch (error) {
-        console.error('Error parsing crew member:', error);
+        console.error('Error parsing localStorage crew member:', error);
         localStorage.removeItem('crewMember');
       }
     }
     
-    // Also check for crew session in sessionStorage for mobile compatibility
+    // Then check sessionStorage for mobile compatibility
     const sessionCrewMember = sessionStorage.getItem('crewMember');
-    if (sessionCrewMember && !storedCrewMember) {
+    if (sessionCrewMember) {
       try {
         const crewMember = JSON.parse(sessionCrewMember);
         console.log('Setting crew session from sessionStorage:', crewMember);

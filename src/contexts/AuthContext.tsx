@@ -108,21 +108,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const email = window.localStorage.getItem('emailForSignIn');
       if (!email) {
-        throw new Error('No email found. Please try signing in again.');
+        // Try sessionStorage as fallback for mobile
+        const sessionEmail = sessionStorage.getItem('emailForSignIn');
+        if (!sessionEmail) {
+          throw new Error('No email found. Please try signing in again.');
+        }
+        // Use session email and sync to localStorage
+        window.localStorage.setItem('emailForSignIn', sessionEmail);
       }
 
-      await signInWithEmailLink(auth, email, window.location.href);
+      const currentEmail = window.localStorage.getItem('emailForSignIn') || email;
       
-      // Clear email from localStorage
+      if (!currentEmail) {
+        throw new Error('No email found. Please try signing in again.');
+      }
+      
+      console.log('Completing sign in for email:', currentEmail);
+      
+      await signInWithEmailLink(auth, currentEmail, window.location.href);
+      
+      // Clear email from both storages
       window.localStorage.removeItem('emailForSignIn');
+      sessionStorage.removeItem('emailForSignIn');
       
       // User is now signed in
       console.log('Sign in completed successfully');
       
+      // Force a small delay to ensure Firebase state is updated
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Redirect to dashboard if not already there
       if (window.location.pathname !== '/dashboard') {
+        // Use window.location.href for more reliable navigation
         window.location.href = '/dashboard';
       }
+      
     } catch (error: any) {
       console.error('Error completing sign in:', error);
       throw new Error('Failed to complete sign in. Please try again.');
