@@ -118,6 +118,11 @@ const CrewIssueForm: React.FC<CrewIssueFormProps> = ({ onSubmit, onClose }) => {
           </button>
         </div>
 
+        {/* Debug info - remove this later */}
+        <div className="mb-4 p-2 bg-green-100 text-green-800 text-xs rounded">
+          Debug: CrewIssueForm with Category and Type fields loaded
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Crew Member Name *</label>
