@@ -47,6 +47,7 @@ export class GoogleSheetsService {
       }
 
       if (!SPREADSHEET_ID) {
+        console.error('Google Sheets Spreadsheet ID not configured. Please check environment variables.');
         throw new Error('Google Sheets Spreadsheet ID not configured');
       }
 
