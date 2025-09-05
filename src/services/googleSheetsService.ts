@@ -3,6 +3,7 @@ import { Issue } from '../types/Issue';
 // Google Sheets API configuration
 const GOOGLE_SHEETS_API_KEY = process.env.REACT_APP_GOOGLE_SHEETS_API_KEY;
 const SPREADSHEET_ID = process.env.REACT_APP_GOOGLE_SPREADSHEET_ID;
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 const SHEET_NAME = 'Sheet1';
 
 // Google Sheets API endpoints
@@ -18,12 +19,65 @@ export class GoogleSheetsService {
   private cache: Issue[] = [];
   private lastFetch: number = 0;
   private readonly CACHE_DURATION = 30000; // 30 seconds
+  private accessToken: string | null = null;
 
   static getInstance(): GoogleSheetsService {
     if (!GoogleSheetsService.instance) {
       GoogleSheetsService.instance = new GoogleSheetsService();
     }
     return GoogleSheetsService.instance;
+  }
+
+  // Initialize Google OAuth2
+  private async initializeGoogleAuth(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!GOOGLE_CLIENT_ID) {
+        reject(new Error('Google Client ID not configured'));
+        return;
+      }
+
+      // Load Google API script
+      if (typeof window !== 'undefined' && !window.gapi) {
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/api.js';
+        script.onload = () => {
+          window.gapi.load('auth2', () => {
+            window.gapi.auth2.init({
+              client_id: GOOGLE_CLIENT_ID,
+              scope: 'https://www.googleapis.com/auth/spreadsheets'
+            }).then(() => {
+              resolve();
+            }).catch(reject);
+          });
+        };
+        script.onerror = reject;
+        document.head.appendChild(script);
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  // Get OAuth2 access token
+  private async getAccessToken(): Promise<string> {
+    if (this.accessToken) {
+      return this.accessToken;
+    }
+
+    await this.initializeGoogleAuth();
+    
+    const authInstance = window.gapi.auth2.getAuthInstance();
+    const user = authInstance.currentUser.get();
+    
+    if (user.isSignedIn()) {
+      this.accessToken = user.getAuthResponse().access_token;
+      return this.accessToken;
+    } else {
+      // Sign in user
+      const authResult = await authInstance.signIn();
+      this.accessToken = authResult.getAuthResponse().access_token;
+      return this.accessToken;
+    }
   }
 
 
@@ -92,48 +146,53 @@ export class GoogleSheetsService {
         status: 'New'
       };
 
-      if (SPREADSHEET_ID && GOOGLE_SHEETS_API_KEY) {
-        // Try to add to Google Sheets
-        const rowData = [
-          newIssue.category, // Issue Category
-          newIssue.issueType, // Issue Type
-          newIssue.description, // Issue Description
-          newIssue.address, // Property Address
-          newIssue.unit, // Unit Number
-          newIssue.name, // Tenant Name
-          newIssue.urgency, // Urgency
-          newIssue.status, // Status
-          newIssue.timestamp, // Date and Time
-          newIssue.userEmail // User Email
-        ];
-
-        const response = await fetch(
-          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&key=${GOOGLE_SHEETS_API_KEY}`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              values: [rowData]
-            })
-          }
-        );
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Google Sheets append error:', response.status, errorText);
-          throw new Error(`Failed to add to Google Sheets: ${response.status}`);
-        }
-
-        console.log('Successfully added issue to Google Sheets');
-        // Update cache
-        this.cache.push(newIssue);
-        this.lastFetch = Date.now();
-      }
-
-      // Also store in localStorage as backup
+      // Store in localStorage first
       this.storeInLocalStorage(newIssue);
+
+      // Try to add to Google Sheets using OAuth2
+      if (SPREADSHEET_ID && GOOGLE_CLIENT_ID) {
+        try {
+          const accessToken = await this.getAccessToken();
+          const rowData = [
+            newIssue.category, // Issue Category
+            newIssue.issueType, // Issue Type
+            newIssue.description, // Issue Description
+            newIssue.address, // Property Address
+            newIssue.unit, // Unit Number
+            newIssue.name, // Tenant Name
+            newIssue.urgency, // Urgency
+            newIssue.status, // Status
+            newIssue.timestamp, // Date and Time
+            newIssue.userEmail // User Email
+          ];
+
+          const response = await fetch(
+            `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`
+              },
+              body: JSON.stringify({
+                values: [rowData]
+              })
+            }
+          );
+
+          if (response.ok) {
+            console.log('Successfully added issue to Google Sheets');
+            // Update cache
+            this.cache.push(newIssue);
+            this.lastFetch = Date.now();
+          } else {
+            const errorText = await response.text();
+            console.error('Google Sheets append error:', response.status, errorText);
+          }
+        } catch (error) {
+          console.error('Google Sheets OAuth2 error:', error);
+        }
+      }
 
       // Trigger update event
       window.dispatchEvent(new CustomEvent('issueUpdated', { 
