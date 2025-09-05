@@ -3,7 +3,7 @@ import { Issue } from '../types/Issue';
 // Google Sheets API configuration
 const GOOGLE_SHEETS_API_KEY = process.env.REACT_APP_GOOGLE_SHEETS_API_KEY;
 const SPREADSHEET_ID = process.env.REACT_APP_GOOGLE_SPREADSHEET_ID;
-const SHEET_NAME = 'Heron Square Maintenance';
+const SHEET_NAME = 'Sheet1';
 
 // Google Sheets API endpoints
 const GOOGLE_SHEETS_BASE_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -43,7 +43,7 @@ export class GoogleSheetsService {
       }
 
       const response = await fetch(
-        `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${GOOGLE_SHEETS_API_KEY}`
+        `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}?key=${GOOGLE_SHEETS_API_KEY}`
       );
 
       if (!response.ok) {
@@ -108,7 +108,7 @@ export class GoogleSheetsService {
         ];
 
         const response = await fetch(
-          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${SHEET_NAME}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&key=${GOOGLE_SHEETS_API_KEY}`,
+          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&key=${GOOGLE_SHEETS_API_KEY}`,
           {
             method: 'POST',
             headers: {
@@ -172,7 +172,7 @@ export class GoogleSheetsService {
         const rowNumber = issueIndex + 2;
         
         const response = await fetch(
-          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${SHEET_NAME}!H${rowNumber}?valueInputOption=RAW&key=${GOOGLE_SHEETS_API_KEY}`,
+          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!H${rowNumber}?valueInputOption=RAW&key=${GOOGLE_SHEETS_API_KEY}`,
           {
             method: 'PUT',
             headers: {
