@@ -65,3 +65,4 @@ const firebaseConfig = {
 2. 🔄 Set up Google Sheets integration
 3. 🔄 Configure email notifications
 4. 🚀 Deploy to production
+
