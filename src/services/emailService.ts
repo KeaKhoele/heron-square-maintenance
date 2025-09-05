@@ -257,26 +257,16 @@ export class EmailService {
 
   // Get admin emails from Google Sheets (placeholder - you'll need to implement this)
   private async getAdminEmails(): Promise<string[]> {
-    try {
-      // This should fetch admin emails from a separate Google Sheet column
-      // For now, return a default list
-      return ['maintenance@heronsquare.co.za']; // Replace with actual implementation
-    } catch (error) {
-      console.error('Error fetching admin emails:', error);
-      return [];
-    }
+    // This should fetch admin emails from a separate Google Sheet column
+    // For now, return a default list
+    return ['maintenance@heronsquare.co.za']; // Replace with actual implementation
   }
 
   // Get spreadsheet as attachment (placeholder - you'll need to implement this)
   private async getSpreadsheetAttachment(): Promise<string> {
-    try {
-      // This should generate or fetch the spreadsheet as a file
-      // For now, return a placeholder
-      return 'base64_encoded_spreadsheet_content'; // Replace with actual implementation
-    } catch (error) {
-      console.error('Error generating spreadsheet attachment:', error);
-      return '';
-    }
+    // This should generate or fetch the spreadsheet as a file
+    // For now, return a placeholder
+    return 'base64_encoded_spreadsheet_content'; // Replace with actual implementation
   }
 }
 
