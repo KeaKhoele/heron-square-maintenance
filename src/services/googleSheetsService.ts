@@ -7,7 +7,6 @@ const SHEET_NAME = 'Sheet1';
 // Service Account credentials
 const SERVICE_ACCOUNT_EMAIL = process.env.REACT_APP_SERVICE_ACCOUNT_EMAIL;
 const SERVICE_ACCOUNT_PRIVATE_KEY = process.env.REACT_APP_SERVICE_ACCOUNT_PRIVATE_KEY;
-const PROJECT_ID = process.env.REACT_APP_PROJECT_ID;
 
 // Google Sheets API endpoints
 const GOOGLE_SHEETS_BASE_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
