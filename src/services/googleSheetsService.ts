@@ -2,7 +2,7 @@ import { Issue } from '../types/Issue';
 
 // Google Sheets API configuration
 const GOOGLE_SHEETS_API_KEY = process.env.REACT_APP_GOOGLE_SHEETS_API_KEY;
-const SPREADSHEET_ID = process.env.REACT_APP_GOOGLE_SPREADSHEET_ID;
+const SPREADSHEET_ID = process.env.REACT_APP_GOOGLE_SHEETS_SPREADSHEET_ID;
 const SHEET_NAME = 'Heron Square Maintenance';
 
 // Google Sheets API endpoints
