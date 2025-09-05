@@ -1,17 +1,16 @@
 import { Issue } from '../types/Issue';
 
 // Google Sheets API configuration
-const GOOGLE_SHEETS_API_KEY = process.env.REACT_APP_GOOGLE_SHEETS_API_KEY;
 const SPREADSHEET_ID = process.env.REACT_APP_GOOGLE_SPREADSHEET_ID;
-const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 const SHEET_NAME = 'Sheet1';
+
+// Service Account credentials
+const SERVICE_ACCOUNT_EMAIL = process.env.REACT_APP_SERVICE_ACCOUNT_EMAIL;
+const SERVICE_ACCOUNT_PRIVATE_KEY = process.env.REACT_APP_SERVICE_ACCOUNT_PRIVATE_KEY;
+const PROJECT_ID = process.env.REACT_APP_PROJECT_ID;
 
 // Google Sheets API endpoints
 const GOOGLE_SHEETS_BASE_URL = 'https://sheets.googleapis.com/v4/spreadsheets';
-
-
-
-
 
 // Google Sheets API service
 export class GoogleSheetsService {
@@ -20,6 +19,7 @@ export class GoogleSheetsService {
   private lastFetch: number = 0;
   private readonly CACHE_DURATION = 30000; // 30 seconds
   private accessToken: string | null = null;
+  private tokenExpiry: number = 0;
 
   static getInstance(): GoogleSheetsService {
     if (!GoogleSheetsService.instance) {
@@ -28,58 +28,108 @@ export class GoogleSheetsService {
     return GoogleSheetsService.instance;
   }
 
-  // Initialize Google OAuth2
-  private async initializeGoogleAuth(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!GOOGLE_CLIENT_ID) {
-        reject(new Error('Google Client ID not configured'));
-        return;
-      }
+  // Generate JWT token for service account authentication
+  private async generateJWT(): Promise<string> {
+    const header = {
+      alg: 'RS256',
+      typ: 'JWT'
+    };
 
-      // Load Google API script
-      if (typeof window !== 'undefined' && !window.gapi) {
-        const script = document.createElement('script');
-        script.src = 'https://apis.google.com/js/api.js';
-        script.onload = () => {
-          window.gapi.load('auth2', () => {
-            window.gapi.auth2.init({
-              client_id: GOOGLE_CLIENT_ID,
-              scope: 'https://www.googleapis.com/auth/spreadsheets'
-            }).then(() => {
-              resolve();
-            }).catch(reject);
-          });
-        };
-        script.onerror = reject;
-        document.head.appendChild(script);
-      } else {
-        resolve();
-      }
-    });
+    const now = Math.floor(Date.now() / 1000);
+    const payload = {
+      iss: SERVICE_ACCOUNT_EMAIL,
+      scope: 'https://www.googleapis.com/auth/spreadsheets',
+      aud: 'https://oauth2.googleapis.com/token',
+      exp: now + 3600, // 1 hour
+      iat: now
+    };
+
+    const encodedHeader = btoa(JSON.stringify(header)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    const encodedPayload = btoa(JSON.stringify(payload)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    
+    const signatureInput = `${encodedHeader}.${encodedPayload}`;
+    
+    // Import the private key
+    const privateKey = await crypto.subtle.importKey(
+      'pkcs8',
+      this.pemToArrayBuffer(SERVICE_ACCOUNT_PRIVATE_KEY!),
+      {
+        name: 'RSASSA-PKCS1-v1_5',
+        hash: 'SHA-256'
+      },
+      false,
+      ['sign']
+    );
+
+    // Sign the JWT
+    const signature = await crypto.subtle.sign(
+      'RSASSA-PKCS1-v1_5',
+      privateKey,
+      new TextEncoder().encode(signatureInput)
+    );
+
+    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+      .replace(/=/g, '')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_');
+
+    return `${signatureInput}.${encodedSignature}`;
   }
 
-  // Get OAuth2 access token
+  // Convert PEM private key to ArrayBuffer
+  private pemToArrayBuffer(pem: string): ArrayBuffer {
+    const base64 = pem
+      .replace(/-----BEGIN PRIVATE KEY-----/, '')
+      .replace(/-----END PRIVATE KEY-----/, '')
+      .replace(/\n/g, '');
+    
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+
+  // Get access token using service account
   private async getAccessToken(): Promise<string> {
-    if (this.accessToken) {
+    if (this.accessToken && Date.now() < this.tokenExpiry) {
       return this.accessToken;
     }
 
-    await this.initializeGoogleAuth();
-    
-    const authInstance = window.gapi.auth2.getAuthInstance();
-    const user = authInstance.currentUser.get();
-    
-    if (user.isSignedIn()) {
-      this.accessToken = user.getAuthResponse().access_token;
+    if (!SERVICE_ACCOUNT_EMAIL || !SERVICE_ACCOUNT_PRIVATE_KEY) {
+      throw new Error('Service account credentials not configured');
+    }
+
+    try {
+      const jwt = await this.generateJWT();
+      
+      const response = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+          grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+          assertion: jwt
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to get access token: ${response.status} ${errorText}`);
+      }
+
+      const data = await response.json();
+      this.accessToken = data.access_token;
+      this.tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000; // 1 minute buffer
+      
       return this.accessToken;
-    } else {
-      // Sign in user
-      const authResult = await authInstance.signIn();
-      this.accessToken = authResult.getAuthResponse().access_token;
-      return this.accessToken;
+    } catch (error) {
+      console.error('Error getting access token:', error);
+      throw error;
     }
   }
-
 
   // Fetch all issues from Google Sheets
   async fetchAllIssues(): Promise<Issue[]> {
@@ -89,15 +139,19 @@ export class GoogleSheetsService {
         return this.cache;
       }
 
-      if (!SPREADSHEET_ID || !GOOGLE_SHEETS_API_KEY) {
-        console.error('Google Sheets configuration missing. Please check environment variables.');
-        console.error('SPREADSHEET_ID:', SPREADSHEET_ID);
-        console.error('GOOGLE_SHEETS_API_KEY:', GOOGLE_SHEETS_API_KEY ? 'Present' : 'Missing');
-        throw new Error('Google Sheets configuration missing');
+      if (!SPREADSHEET_ID) {
+        console.error('Google Sheets Spreadsheet ID not configured');
+        throw new Error('Google Sheets Spreadsheet ID not configured');
       }
 
+      const accessToken = await this.getAccessToken();
       const response = await fetch(
-        `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}?key=${GOOGLE_SHEETS_API_KEY}`
+        `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
       );
 
       if (!response.ok) {
@@ -149,8 +203,8 @@ export class GoogleSheetsService {
       // Store in localStorage first
       this.storeInLocalStorage(newIssue);
 
-      // Try to add to Google Sheets using OAuth2
-      if (SPREADSHEET_ID && GOOGLE_CLIENT_ID) {
+      // Try to add to Google Sheets using service account
+      if (SPREADSHEET_ID && SERVICE_ACCOUNT_EMAIL && SERVICE_ACCOUNT_PRIVATE_KEY) {
         try {
           const accessToken = await this.getAccessToken();
           const rowData = [
@@ -190,7 +244,7 @@ export class GoogleSheetsService {
             console.error('Google Sheets append error:', response.status, errorText);
           }
         } catch (error) {
-          console.error('Google Sheets OAuth2 error:', error);
+          console.error('Google Sheets service account error:', error);
         }
       }
 
@@ -218,7 +272,7 @@ export class GoogleSheetsService {
   // Update issue status in Google Sheets
   async updateIssueStatus(issueId: string, status: 'In Process' | 'Complete'): Promise<void> {
     try {
-      if (SPREADSHEET_ID && GOOGLE_SHEETS_API_KEY) {
+      if (SPREADSHEET_ID && SERVICE_ACCOUNT_EMAIL && SERVICE_ACCOUNT_PRIVATE_KEY) {
         // Find the row number for this issue
         const issues = await this.fetchAllIssues();
         const issueIndex = issues.findIndex(issue => issue.id === issueId);
@@ -229,13 +283,15 @@ export class GoogleSheetsService {
 
         // Update in Google Sheets (row + 2 because of 0-indexing and header row)
         const rowNumber = issueIndex + 2;
+        const accessToken = await this.getAccessToken();
         
         const response = await fetch(
-          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!H${rowNumber}?valueInputOption=RAW&key=${GOOGLE_SHEETS_API_KEY}`,
+          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!H${rowNumber}?valueInputOption=RAW`,
           {
             method: 'PUT',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
             },
             body: JSON.stringify({
               values: [[status]]
@@ -257,63 +313,34 @@ export class GoogleSheetsService {
         }
       }
 
-      // Also update localStorage as backup
-      this.updateInLocalStorage(issueId, status);
-
-      // Trigger update event
-      window.dispatchEvent(new CustomEvent('issueUpdated', { 
-        detail: { action: 'updated', issueId, status } 
-      }));
+      // Also update localStorage
+      const storedIssues = this.getFromLocalStorage();
+      const issueIndex = storedIssues.findIndex(issue => issue.id === issueId);
+      if (issueIndex !== -1) {
+        storedIssues[issueIndex].status = status;
+        localStorage.setItem('maintenanceIssues', JSON.stringify(storedIssues));
+      }
     } catch (error) {
       console.error('Error updating issue status:', error);
-      // Fallback to localStorage only
-      this.updateInLocalStorage(issueId, status);
+      throw error;
     }
   }
 
-  // Get user-specific issues
-  async getUserIssues(userEmail: string): Promise<Issue[]> {
-    const allIssues = await this.fetchAllIssues();
-    return allIssues.filter(issue => issue.userEmail === userEmail);
+  // Local storage methods (fallback)
+  private storeInLocalStorage(issue: Issue): void {
+    const storedIssues = this.getFromLocalStorage();
+    storedIssues.push(issue);
+    localStorage.setItem('maintenanceIssues', JSON.stringify(storedIssues));
   }
 
-  // Local storage fallback methods
   private getFromLocalStorage(): Issue[] {
     try {
-      const stored = localStorage.getItem('maintenance_issues');
+      const stored = localStorage.getItem('maintenanceIssues');
       return stored ? JSON.parse(stored) : [];
     } catch (error) {
       console.error('Error reading from localStorage:', error);
       return [];
     }
-  }
-
-  private storeInLocalStorage(issue: Issue): void {
-    try {
-      const existing = this.getFromLocalStorage();
-      existing.push(issue);
-      localStorage.setItem('maintenance_issues', JSON.stringify(existing));
-    } catch (error) {
-      console.error('Error writing to localStorage:', error);
-    }
-  }
-
-  private updateInLocalStorage(issueId: string, status: string): void {
-    try {
-      const existing = this.getFromLocalStorage();
-      const updated = existing.map(issue => 
-        issue.id === issueId ? { ...issue, status } : issue
-      );
-      localStorage.setItem('maintenance_issues', JSON.stringify(updated));
-    } catch (error) {
-      console.error('Error updating localStorage:', error);
-    }
-  }
-
-  // Clear cache (useful for testing)
-  clearCache(): void {
-    this.cache = [];
-    this.lastFetch = 0;
   }
 }
 
