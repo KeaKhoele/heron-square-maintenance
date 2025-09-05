@@ -37,6 +37,8 @@ export class GoogleSheetsService {
 
       if (!SPREADSHEET_ID || !GOOGLE_SHEETS_API_KEY) {
         console.error('Google Sheets configuration missing. Please check environment variables.');
+        console.error('SPREADSHEET_ID:', SPREADSHEET_ID);
+        console.error('GOOGLE_SHEETS_API_KEY:', GOOGLE_SHEETS_API_KEY ? 'Present' : 'Missing');
         throw new Error('Google Sheets configuration missing');
       }
 
