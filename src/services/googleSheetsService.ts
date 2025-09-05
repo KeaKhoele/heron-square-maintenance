@@ -26,17 +26,6 @@ export class GoogleSheetsService {
     return GoogleSheetsService.instance;
   }
 
-  // Initialize the service and create headers if needed
-  private async initializeHeaders(): Promise<Headers> {
-    const headers = new Headers();
-    headers.append('Content-Type', 'application/json');
-    
-    if (GOOGLE_SHEETS_API_KEY) {
-      headers.append('Authorization', `Bearer ${GOOGLE_SHEETS_API_KEY}`);
-    }
-    
-    return headers;
-  }
 
   // Fetch all issues from Google Sheets
   async fetchAllIssues(): Promise<Issue[]> {
@@ -46,18 +35,18 @@ export class GoogleSheetsService {
         return this.cache;
       }
 
-      if (!SPREADSHEET_ID) {
-        console.error('Google Sheets Spreadsheet ID not configured. Please check environment variables.');
-        throw new Error('Google Sheets Spreadsheet ID not configured');
+      if (!SPREADSHEET_ID || !GOOGLE_SHEETS_API_KEY) {
+        console.error('Google Sheets configuration missing. Please check environment variables.');
+        throw new Error('Google Sheets configuration missing');
       }
 
-      const headers = await this.initializeHeaders();
       const response = await fetch(
-        `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${GOOGLE_SHEETS_API_KEY}`,
-        { headers }
+        `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${SHEET_NAME}?key=${GOOGLE_SHEETS_API_KEY}`
       );
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Google Sheets API error:', response.status, errorText);
         throw new Error(`Google Sheets API error: ${response.status}`);
       }
 
@@ -76,7 +65,7 @@ export class GoogleSheetsService {
         description: row[2] || '', // Issue Description column
         urgency: (row[6] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
         status: (row[7] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
-        userEmail: row[9] || '' // We'll need to add this column or derive from tenant name
+        userEmail: row[9] || '' // User Email column
       }));
 
       // Update cache
@@ -101,9 +90,8 @@ export class GoogleSheetsService {
         status: 'New'
       };
 
-      if (SPREADSHEET_ID) {
+      if (SPREADSHEET_ID && GOOGLE_SHEETS_API_KEY) {
         // Try to add to Google Sheets
-        const headers = await this.initializeHeaders();
         const rowData = [
           newIssue.category, // Issue Category
           newIssue.issueType, // Issue Type
@@ -121,7 +109,9 @@ export class GoogleSheetsService {
           `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${SHEET_NAME}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&key=${GOOGLE_SHEETS_API_KEY}`,
           {
             method: 'POST',
-            headers,
+            headers: {
+              'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
               values: [rowData]
             })
@@ -129,9 +119,12 @@ export class GoogleSheetsService {
         );
 
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Google Sheets append error:', response.status, errorText);
           throw new Error(`Failed to add to Google Sheets: ${response.status}`);
         }
 
+        console.log('Successfully added issue to Google Sheets');
         // Update cache
         this.cache.push(newIssue);
         this.lastFetch = Date.now();
@@ -164,7 +157,7 @@ export class GoogleSheetsService {
   // Update issue status in Google Sheets
   async updateIssueStatus(issueId: string, status: 'In Process' | 'Complete'): Promise<void> {
     try {
-      if (SPREADSHEET_ID) {
+      if (SPREADSHEET_ID && GOOGLE_SHEETS_API_KEY) {
         // Find the row number for this issue
         const issues = await this.fetchAllIssues();
         const issueIndex = issues.findIndex(issue => issue.id === issueId);
@@ -175,13 +168,14 @@ export class GoogleSheetsService {
 
         // Update in Google Sheets (row + 2 because of 0-indexing and header row)
         const rowNumber = issueIndex + 2;
-        const headers = await this.initializeHeaders();
         
         const response = await fetch(
           `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${SHEET_NAME}!H${rowNumber}?valueInputOption=RAW&key=${GOOGLE_SHEETS_API_KEY}`,
           {
             method: 'PUT',
-            headers,
+            headers: {
+              'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
               values: [[status]]
             })
@@ -189,9 +183,12 @@ export class GoogleSheetsService {
         );
 
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Google Sheets update error:', response.status, errorText);
           throw new Error(`Failed to update Google Sheets: ${response.status}`);
         }
 
+        console.log('Successfully updated issue status in Google Sheets');
         // Update cache
         const issue = this.cache.find(i => i.id === issueId);
         if (issue) {
