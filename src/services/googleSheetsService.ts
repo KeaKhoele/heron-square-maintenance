@@ -124,6 +124,10 @@ export class GoogleSheetsService {
       this.accessToken = data.access_token;
       this.tokenExpiry = Date.now() + (data.expires_in * 1000) - 60000; // 1 minute buffer
       
+      if (!this.accessToken) {
+        throw new Error('No access token received from Google');
+      }
+      
       return this.accessToken;
     } catch (error) {
       console.error('Error getting access token:', error);
