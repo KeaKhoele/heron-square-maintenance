@@ -68,7 +68,7 @@ export class GoogleSheetsService {
       new TextEncoder().encode(signatureInput)
     );
 
-    const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature)))
+    const encodedSignature = btoa(Array.from(new Uint8Array(signature)).map(byte => String.fromCharCode(byte)).join(''))
       .replace(/=/g, '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_');
