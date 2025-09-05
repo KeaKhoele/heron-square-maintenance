@@ -135,6 +135,19 @@ export class GoogleSheetsService {
     }
   }
 
+  // Fetch issues for a specific user from Google Sheets
+  async getUserIssues(userEmail: string): Promise<Issue[]> {
+    try {
+      const allIssues = await this.fetchAllIssues();
+      return allIssues.filter(issue => issue.userEmail === userEmail);
+    } catch (error) {
+      console.error('Error fetching user issues from Google Sheets:', error);
+      // Fallback to localStorage
+      const storedIssues = this.getFromLocalStorage();
+      return storedIssues.filter(issue => issue.userEmail === userEmail);
+    }
+  }
+
   // Fetch all issues from Google Sheets
   async fetchAllIssues(): Promise<Issue[]> {
     try {
@@ -328,6 +341,12 @@ export class GoogleSheetsService {
       console.error('Error updating issue status:', error);
       throw error;
     }
+  }
+
+  // Clear cache to force refresh
+  clearCache(): void {
+    this.cache = [];
+    this.lastFetch = 0;
   }
 
   // Local storage methods (fallback)
