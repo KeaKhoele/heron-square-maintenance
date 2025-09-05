@@ -3,7 +3,6 @@ import { X } from 'lucide-react';
 
 interface CrewIssueFormData {
   crewName: string;
-  crewEmail: string;
   address: string;
   unit: string;
   category: 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General';
@@ -59,7 +58,6 @@ const ISSUE_CATEGORIES = {
 const CrewIssueForm: React.FC<CrewIssueFormProps> = ({ onSubmit, onClose }) => {
   const [formData, setFormData] = useState<CrewIssueFormData>({
     crewName: '',
-    crewEmail: '',
     address: '',
     unit: '',
     category: 'General',
@@ -75,7 +73,6 @@ const CrewIssueForm: React.FC<CrewIssueFormProps> = ({ onSubmit, onClose }) => {
     const newErrors: Partial<Record<keyof CrewIssueFormData, string>> = {};
     
     if (!formData.crewName.trim()) newErrors.crewName = 'Crew name is required';
-    if (!formData.crewEmail.trim()) newErrors.crewEmail = 'Crew email is required';
     if (!formData.address) newErrors.address = 'Address is required';
     if (!formData.unit) newErrors.unit = 'Unit is required';
     if (!formData.category) newErrors.category = 'Category is required';
@@ -130,18 +127,6 @@ const CrewIssueForm: React.FC<CrewIssueFormProps> = ({ onSubmit, onClose }) => {
               placeholder="Your name"
             />
             {errors.crewName && <p className="text-sm text-red-600">{errors.crewName}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Crew Email *</label>
-            <input
-              type="email"
-              value={formData.crewEmail}
-              onChange={(e) => setFormData(prev => ({ ...prev, crewEmail: e.target.value }))}
-              className={`w-full px-3 py-2 border rounded-md ${errors.crewEmail ? 'border-red-300' : 'border-gray-300'}`}
-              placeholder="your.email@example.com"
-            />
-            {errors.crewEmail && <p className="text-sm text-red-600">{errors.crewEmail}</p>}
           </div>
 
           <div>

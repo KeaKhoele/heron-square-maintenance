@@ -133,7 +133,7 @@ const AdminDashboard: React.FC = () => {
         issueType: data.issueType,
         description: data.description,
         urgency: data.urgency,
-        userEmail: data.crewEmail
+        userEmail: 'crew@heronsquare.co.za' // Default crew email
       };
       
       // Use the existing issue service to submit
