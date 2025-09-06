@@ -42,9 +42,6 @@ const CrewSignIn: React.FC = () => {
         return;
       }
 
-      // Success - crew member verified
-      setSuccess(true);
-      
       // Clear any existing Firebase tenant session to maintain role separation
       try {
         await logout();
@@ -60,10 +57,13 @@ const CrewSignIn: React.FC = () => {
       console.log('Crew member authenticated:', crewMember);
       console.log('Stored in localStorage and sessionStorage, navigating to /admin...');
       
-      // Longer delay for mobile to ensure context updates
+      // Success - crew member verified
+      setSuccess(true);
+      
+      // Shorter delay to ensure context updates properly
       setTimeout(() => {
         navigate('/admin', { replace: true });
-      }, 300);
+      }, 100);
       
     } catch (error: any) {
       console.error('Error during crew authentication:', error);

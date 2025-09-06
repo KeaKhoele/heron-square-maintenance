@@ -55,6 +55,7 @@ const CREW_MEMBERS: CrewMember[] = [
     addedBy: 'system',
     addedDate: '2024-08-17T18:00:00.000Z' // Fixed date instead of new Date()
   }
+  // Add your UCT email here when you provide it
   // More crew members will be added dynamically
 ];
 
@@ -201,6 +202,7 @@ export function AccessControlProvider({ children }: AccessControlProviderProps) 
   // Clear crew session (for logout)
   const clearCrewSession = () => {
     localStorage.removeItem('crewMember');
+    sessionStorage.removeItem('crewMember');
     setCrewSession(null);
   };
 

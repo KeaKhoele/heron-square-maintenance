@@ -234,8 +234,12 @@ export class EmailService {
   // Get admin emails from Google Sheets (placeholder - you'll need to implement this)
   private async getAdminEmails(): Promise<string[]> {
     // This should fetch admin emails from a separate Google Sheet column
-    // For now, return a default list
-    return ['maintenance@heronsquare.co.za']; // Replace with actual implementation
+    // For now, return a default list including crew members
+    return [
+      'maintenance@heronsquare.co.za',
+      'kea.khoele@gmail.com', // Primary crew member
+      'enquiries@heronsquare.co.za' // Admin email
+    ]; // Replace with actual implementation
   }
 
   // Get spreadsheet as attachment (placeholder - you'll need to implement this)
