@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, LogOut, AlertCircle } from 'lucide-react';
 import IssueForm from './IssueForm';
 import OfflineIndicator from './OfflineIndicator';
-import LoadingSpinner from './LoadingSpinner';
 import AnimatedButton from './AnimatedButton';
 import Card, { IssueCard } from './Card';
 import EmptyState from './EmptyState';
@@ -76,7 +75,9 @@ const Dashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading your issues..." />
+        <div className="text-center">
+          <p className="text-lg text-gray-600">Loading your issues...</p>
+        </div>
       </div>
     );
   }

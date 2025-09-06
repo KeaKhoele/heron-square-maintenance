@@ -45,7 +45,7 @@ const SyncIndicator: React.FC<SyncIndicatorProps> = ({ syncStatus, className = '
 
   const getStatusIcon = () => {
     if (syncStatus.isSyncing) {
-      return <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />;
+      return <RefreshCw className="h-4 w-4 text-blue-500" />;
     }
     
     if (syncStatus.hasError) {

@@ -183,7 +183,7 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onC
   };
 
   return (
-    <div className={`relative p-4 rounded-lg border shadow-lg ${getBackgroundColor()} animate-slide-in`}>
+    <div className={`relative p-4 rounded-lg border shadow-lg ${getBackgroundColor()}`}>
       <div className="flex items-start">
         <div className="flex-shrink-0">
           {getIcon()}
@@ -224,19 +224,6 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ notification, onC
 // Add CSS animation
 const style = document.createElement('style');
 style.textContent = `
-  @keyframes slide-in {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-  
-  .animate-slide-in {
-    animation: slide-in 0.3s ease-out;
-  }
+  /* No animations to prevent glitches */
 `;
 document.head.appendChild(style);

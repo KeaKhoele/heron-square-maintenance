@@ -68,7 +68,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-lg transition-shadow">
+    <div className="bg-white rounded-xl p-6 shadow-md">
       <div className="flex items-center">
         <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
           {icon}
@@ -131,7 +131,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       )}
       <div className={`w-full bg-gray-200 rounded-full overflow-hidden ${sizeClasses[size]}`}>
         <div
-          className={`h-full transition-all duration-500 ease-out ${colorClasses[color]}`}
+          className={`h-full ${colorClasses[color]}`}
           style={{ width: `${percentage}%` }}
         />
       </div>

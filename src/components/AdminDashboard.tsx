@@ -16,7 +16,6 @@ import TenantManagement from './TenantManagement';
 import PropertyManagement from './PropertyManagement';
 import HamburgerMenu from './HamburgerMenu';
 import OfflineIndicator from './OfflineIndicator';
-import LoadingSpinner from './LoadingSpinner';
 import AnimatedButton from './AnimatedButton';
 import Card, { IssueCard } from './Card';
 import EmptyState, { StatsCard } from './EmptyState';
@@ -206,7 +205,9 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading maintenance issues..." />
+        <div className="text-center">
+          <p className="text-lg text-gray-600">Loading maintenance issues...</p>
+        </div>
       </div>
     );
   }
