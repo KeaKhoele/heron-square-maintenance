@@ -187,20 +187,32 @@ export class GoogleSheetsService {
       const data = await response.json();
       const rows = data.values || [];
 
-      // Convert rows to issues (skip header row)
-      const issues: Issue[] = rows.slice(1).map((row: any[]) => ({
-        id: row[0] || Date.now().toString(),
-        timestamp: row[8] || new Date().toISOString(), // Date and Time column
-        name: row[5] || '', // Tenant Name column
-        address: row[3] || '', // Property Address column
-        unit: row[4] || '', // Unit Number column
-        category: (row[0] as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General') || 'General', // Issue Category column
-        issueType: row[1] || '', // Issue Type column
-        description: row[2] || '', // Issue Description column
-        urgency: (row[6] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
-        status: (row[7] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
-        userEmail: row[9] || '' // User Email column
-      }));
+      // Convert rows to issues (skip header row and filter out empty/invalid rows)
+      const issues: Issue[] = rows.slice(1)
+        .filter((row: any[]) => {
+          // Filter out rows that look like headers or are empty
+          const hasValidData = row && row.length > 0 && 
+            row[5] && // Tenant Name
+            row[3] && // Property Address
+            row[4] && // Unit Number
+            row[5] !== 'Tenant Name' && // Not a header row
+            row[3] !== 'Property Address' && // Not a header row
+            row[4] !== 'Unit Number'; // Not a header row
+          return hasValidData;
+        })
+        .map((row: any[]) => ({
+          id: row[0] || Date.now().toString(),
+          timestamp: row[8] || new Date().toISOString(), // Date and Time column
+          name: row[5] || '', // Tenant Name column
+          address: row[3] || '', // Property Address column
+          unit: row[4] || '', // Unit Number column
+          category: (row[0] as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General') || 'General', // Issue Category column
+          issueType: row[1] || '', // Issue Type column
+          description: row[2] || '', // Issue Description column
+          urgency: (row[6] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
+          status: (row[7] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
+          userEmail: row[9] || '' // User Email column
+        }));
 
       // Update cache
       this.cache = issues;

@@ -102,6 +102,46 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  const handleStatusToggle = async (issueId: string, currentStatus: string) => {
+    try {
+      let newStatus: 'In Process' | 'Complete';
+      
+      if (currentUserLevel === AccessLevel.PRIMARY_CREW) {
+        // Primary Crew can toggle between any status
+        newStatus = currentStatus === 'New' ? 'In Process' : 
+                   currentStatus === 'In Process' ? 'Complete' : 'In Process';
+      } else {
+        // Secondary Crew can only progress sequentially
+        if (currentStatus === 'New') {
+          newStatus = 'In Process';
+        } else if (currentStatus === 'In Process') {
+          newStatus = 'Complete';
+        } else {
+          // If already Complete, don't allow going back
+          return;
+        }
+      }
+
+      await updateIssueStatus(issueId, newStatus);
+      
+      // Refresh the issues list to show updated status
+      await loadIssues();
+      
+      showSuccess(
+        'Status Updated',
+        `Issue status has been updated to ${newStatus}`,
+        3000
+      );
+      
+    } catch (error) {
+      showError(
+        'Update Failed',
+        'Failed to update issue status. Please try again.',
+        5000
+      );
+    }
+  };
+
 
   const handleCrewIssueSubmit = async (data: any) => {
     try {
@@ -423,7 +463,7 @@ const AdminDashboard: React.FC = () => {
                   key={issue.id}
                   issue={issue}
                   canEditStatus={canToggleStatus}
-                  onStatusChange={handleStatusUpdate}
+                  onStatusChange={canToggleStatus ? handleStatusToggle : handleStatusUpdate}
                 />
               ))}
             </div>

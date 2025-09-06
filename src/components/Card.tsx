@@ -151,6 +151,14 @@ export const IssueCard: React.FC<IssueCardProps> = ({
               Mark Complete
             </button>
           )}
+          {issue.status === 'Complete' && (
+            <button
+              onClick={() => onStatusChange(issue.id, 'In Process')}
+              className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+            >
+              Reopen Issue
+            </button>
+          )}
         </div>
       )}
     </Card>
