@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { propertyService } from '../services/propertyService';
 import { Building2, Wrench, Mail, CheckCircle } from 'lucide-react';
 
 const Home: React.FC = () => {
@@ -15,6 +16,12 @@ const Home: React.FC = () => {
     
     if (!email.trim()) {
       setError('Please enter your email address');
+      return;
+    }
+
+    // Check if email is authorized
+    if (!propertyService.isEmailAuthorized(email)) {
+      setError('This email is not authorized to access the tenant portal. Please contact the property manager.');
       return;
     }
 

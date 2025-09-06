@@ -13,6 +13,7 @@ import {
   X
 } from 'lucide-react';
 import CrewIssueForm from './CrewIssueForm';
+import TenantManagement from './TenantManagement';
 import { getAllIssues, updateIssueStatus, submitIssue, getNetworkStatus, getOfflineQueueLength } from '../services/issueService';
 import { Issue } from '../types/Issue';
 
@@ -33,6 +34,7 @@ const AdminDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'New' | 'In Process' | 'Complete'>('all');
   const [showCrewManagement, setShowCrewManagement] = useState(false);
+  const [showTenantManagement, setShowTenantManagement] = useState(false);
   const [showAddCrew, setShowAddCrew] = useState(false);
   const [newCrewAccessLevel, setNewCrewAccessLevel] = useState<AccessLevel>(AccessLevel.SECONDARY_CREW);
   const [showCrewIssueForm, setShowCrewIssueForm] = useState(false);
@@ -272,6 +274,17 @@ const AdminDashboard: React.FC = () => {
                 >
                   <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   Manage Crew
+                </button>
+              )}
+
+              {/* Manage Tenants Button (Primary Crew Only) */}
+              {canManageUsers && (
+                <button
+                  onClick={() => setShowTenantManagement(true)}
+                  className="flex items-center px-2 py-1 sm:px-4 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm sm:text-base"
+                >
+                  <Building2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  Manage Tenants
                 </button>
               )}
               
@@ -584,6 +597,13 @@ const AdminDashboard: React.FC = () => {
         <CrewIssueForm
           onSubmit={handleCrewIssueSubmit}
           onClose={() => setShowCrewIssueForm(false)}
+        />
+      )}
+
+      {/* Tenant Management Modal */}
+      {showTenantManagement && (
+        <TenantManagement
+          onClose={() => setShowTenantManagement(false)}
         />
       )}
     </div>
