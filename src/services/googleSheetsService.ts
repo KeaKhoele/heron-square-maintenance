@@ -207,7 +207,7 @@ export class GoogleSheetsService {
           if (hasIssueIdColumn) {
             // New format: Issue ID in column A
             return {
-              id: row[0] || Date.now().toString(), // Issue ID column
+              id: row[0] || this.generateUniqueId(), // Issue ID column
               timestamp: row[9] || this.getCapeTownTimestamp(), // Date and Time column
               name: row[6] || '', // Tenant Name column
               address: row[4] || '', // Property Address column
@@ -222,7 +222,7 @@ export class GoogleSheetsService {
           } else {
             // Old format: No Issue ID column, generate one
             return {
-              id: Date.now().toString() + Math.random().toString(36).substr(2, 9), // Generate unique ID
+              id: this.generateUniqueId(), // Generate unique ID
               timestamp: row[8] || this.getCapeTownTimestamp(), // Date and Time column
               name: row[5] || '', // Tenant Name column
               address: row[3] || '', // Property Address column
@@ -253,18 +253,15 @@ export class GoogleSheetsService {
     }
   }
 
-  // Helper function to get Cape Town timezone timestamp
-  private getCapeTownTimestamp(): string {
-    const now = new Date();
-    // Cape Town is UTC+2 (SAST - South African Standard Time)
-    const capeTownTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
-    return capeTownTime.toISOString().replace('Z', '+02:00');
+  // Helper function to generate unique IDs
+  private generateUniqueId(): string {
+    return Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9) + '-' + Math.random().toString(36).substr(2, 9);
   }
   async submitIssue(issueData: Omit<Issue, 'id' | 'timestamp' | 'status'>): Promise<Issue> {
     try {
       const newIssue: Issue = {
         ...issueData,
-        id: Date.now().toString(),
+        id: this.generateUniqueId(),
         timestamp: this.getCapeTownTimestamp(),
         status: 'New'
       };

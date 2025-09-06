@@ -131,7 +131,7 @@ export const submitIssue = async (issueData: Omit<Issue, 'id' | 'timestamp' | 's
     // Fallback to localStorage
     const newIssue: Issue = {
       ...issueData,
-      id: Date.now().toString(),
+      id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
       timestamp: new Date().toISOString(),
       status: 'New'
     };
