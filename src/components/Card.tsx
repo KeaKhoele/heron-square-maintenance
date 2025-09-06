@@ -51,7 +51,7 @@ interface IssueCardProps {
     status: 'New' | 'In Process' | 'Complete';
     timestamp: string;
   };
-  onStatusChange?: (issueId: string, newStatus: 'In Process' | 'Complete') => void;
+  onStatusChange?: (issueId: string, currentStatus: 'New' | 'In Process' | 'Complete') => void;
   canEditStatus?: boolean;
 }
 
