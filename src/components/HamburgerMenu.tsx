@@ -64,9 +64,8 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       )}
 
       {/* Menu Panel */}
-      <div className={`fixed top-0 left-0 h-full w-full sm:w-80 bg-white shadow-xl transform z-50 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      {isOpen && (
+        <div className="fixed top-0 left-0 h-full w-full sm:w-80 bg-white shadow-xl z-50">
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-900">Admin Menu</h2>
           <button
@@ -115,7 +114,8 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
             </div>
           </button>
         </div>
-      </div>
+        </div>
+      )}
     </>
   );
 };
