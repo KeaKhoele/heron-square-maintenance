@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Building2, Plus, Trash2, Users, AlertCircle, CheckCircle, X } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Building2, Plus, Trash2, Users, AlertCircle, X } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
 import { Property, Tenant, PropertyWithTenants } from '../types/Property';
 
@@ -30,15 +30,15 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
 
   useEffect(() => {
     loadProperties();
-  }, []);
+  }, [loadProperties]);
 
-  const loadProperties = () => {
+  const loadProperties = useCallback(() => {
     const propertiesWithTenants = propertyService.getPropertiesWithTenants();
     setProperties(propertiesWithTenants);
     if (propertiesWithTenants.length > 0 && !selectedProperty) {
       setSelectedProperty(propertiesWithTenants[0].id);
     }
-  };
+  }, [selectedProperty]);
 
   const handleAddProperty = () => {
     if (!newProperty.name || !newProperty.address || newProperty.units < 1) {
@@ -120,8 +120,6 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
   };
 
   const selectedPropertyData = properties.find(p => p.id === selectedProperty);
-  const availableUnits = selectedPropertyData ? 
-    propertyService.getAvailableUnits(selectedProperty) : [];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
