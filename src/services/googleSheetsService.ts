@@ -310,7 +310,7 @@ export class GoogleSheetsService {
   }
 
   // Update issue status in Google Sheets
-  async updateIssueStatus(issueId: string, status: 'In Process' | 'Complete'): Promise<void> {
+  async updateIssueStatus(issueId: string, status: 'New' | 'In Process' | 'Complete'): Promise<void> {
     try {
       if (SPREADSHEET_ID && SERVICE_ACCOUNT_EMAIL && SERVICE_ACCOUNT_PRIVATE_KEY) {
         // Find the row number for this issue

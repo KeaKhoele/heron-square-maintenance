@@ -100,7 +100,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleStatusToggle = async (issueId: string, currentStatus: string) => {
     try {
-      let newStatus: 'In Process' | 'Complete';
+      let newStatus: 'New' | 'In Process' | 'Complete';
       
       if (currentUserLevel === AccessLevel.PRIMARY_CREW) {
         // Primary Crew can toggle between any status

@@ -182,7 +182,7 @@ export const getAllIssues = async (): Promise<Issue[]> => {
   }
 };
 
-export const updateIssueStatus = async (issueId: string, status: 'In Process' | 'Complete', userId: string = 'crew'): Promise<void> => {
+export const updateIssueStatus = async (issueId: string, status: 'New' | 'In Process' | 'Complete', userId: string = 'crew'): Promise<void> => {
   try {
     // Use Google Sheets service as primary
     await googleSheetsService.updateIssueStatus(issueId, status);
