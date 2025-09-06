@@ -51,6 +51,8 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
 
   // Load properties on component mount
   useEffect(() => {
+    // Ensure properties are refreshed
+    propertyService.refreshProperties();
     const loadedProperties = propertyService.getAllProperties();
     setProperties(loadedProperties);
     if (loadedProperties.length > 0) {

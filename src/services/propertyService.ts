@@ -29,6 +29,222 @@ export class PropertyService {
           units: 10,
           createdAt: new Date().toISOString(),
           createdBy: 'system'
+        },
+        {
+          id: 'arnold-8',
+          name: '8 Arnold Street',
+          address: '8 Arnold Street',
+          units: 6,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'cole-186',
+          name: '186 Cole Street',
+          address: '186 Cole Street',
+          units: 16,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'franklin-5',
+          name: '5 Franklin Road',
+          address: '5 Franklin Road',
+          units: 17,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'grant-2',
+          name: '2 Grant Street',
+          address: '2 Grant Street',
+          units: 3,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'highbury-11',
+          name: '11 Highbury Road',
+          address: '11 Highbury Road',
+          units: 9,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'lower-scott-11',
+          name: '11 Lower Scott Road',
+          address: '11 Lower Scott Road',
+          units: 4,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'lynton-4',
+          name: '4 Lynton Road',
+          address: '4 Lynton Road',
+          units: 6,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'lynton-6',
+          name: '6 Lynton Road',
+          address: '6 Lynton Road',
+          units: 6,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'st-micheal-6',
+          name: '6 St Micheal',
+          address: '6 St Micheal',
+          units: 3,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'nelson-1',
+          name: '1 Nelson Road',
+          address: '1 Nelson Road',
+          units: 5,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'nelson-3',
+          name: '3 Nelson Road',
+          address: '3 Nelson Road',
+          units: 4,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'nelson-4',
+          name: '4 Nelson Road',
+          address: '4 Nelson Road',
+          units: 4,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'nelson-5',
+          name: '5 Nelson Road',
+          address: '5 Nelson Road',
+          units: 4,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'nelson-6',
+          name: '6 Nelson Road',
+          address: '6 Nelson Road',
+          units: 4,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'nelson-7',
+          name: '7 Nelson Road',
+          address: '7 Nelson Road',
+          units: 4,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'nelson-8',
+          name: '8 Nelson Road',
+          address: '8 Nelson Road',
+          units: 4,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'nelson-9',
+          name: '9 Nelson Road',
+          address: '9 Nelson Road',
+          units: 4,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'lower-main-79',
+          name: '79 Lower Main Road',
+          address: '79 Lower Main Road',
+          units: 23,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'roman-4',
+          name: '4 Roman Road',
+          address: '4 Roman Road',
+          units: 5,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'roman-6',
+          name: '6 Roman Road',
+          address: '6 Roman Road',
+          units: 12,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'scott-3',
+          name: '3 Scott Road',
+          address: '3 Scott Road',
+          units: 5,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'stanley-17',
+          name: '17 Stanley Road',
+          address: '17 Stanley Road',
+          units: 19,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'stanley-17-flatlet',
+          name: '17 Stanley Road Flatlet',
+          address: '17 Stanley Road Flatlet',
+          units: 1,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'stanley-21',
+          name: '21 Stanley Road',
+          address: '21 Stanley Road',
+          units: 15,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'stanley-25',
+          name: '25 Stanley Road',
+          address: '25 Stanley Road',
+          units: 7,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'stanley-25a',
+          name: '25A Stanley Road',
+          address: '25A Stanley Road',
+          units: 2,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
+        },
+        {
+          id: 'station-5',
+          name: '5 Station Road',
+          address: '5 Station Road',
+          units: 21,
+          createdAt: new Date().toISOString(),
+          createdBy: 'system'
         }
       ];
       this.properties = defaultProperties;
@@ -81,6 +297,14 @@ export class PropertyService {
     } catch (error) {
       console.error('Error saving property data to storage:', error);
     }
+  }
+
+  // Force refresh properties (useful for updating from hardcoded to dynamic)
+  refreshProperties(): void {
+    // Clear existing properties and reinitialize
+    this.properties = [];
+    this.saveToStorage();
+    this.initializeDefaultProperties();
   }
 
   // Property management

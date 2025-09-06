@@ -43,6 +43,8 @@ const CrewIssueForm: React.FC<CrewIssueFormProps> = ({ onSubmit, onClose }) => {
 
   // Load properties on component mount
   useEffect(() => {
+    // Ensure properties are refreshed
+    propertyService.refreshProperties();
     const loadedProperties = propertyService.getAllProperties();
     setProperties(loadedProperties);
     if (loadedProperties.length > 0) {

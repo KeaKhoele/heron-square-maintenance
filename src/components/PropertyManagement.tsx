@@ -19,6 +19,8 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({ onClose }) => {
   });
 
   useEffect(() => {
+    // Force refresh properties to ensure all are loaded
+    propertyService.refreshProperties();
     loadProperties();
   }, []);
 
