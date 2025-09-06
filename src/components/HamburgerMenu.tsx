@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, X, Users, Building2, Settings } from 'lucide-react';
 
 interface HamburgerMenuProps {
@@ -16,6 +16,28 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
+
+  // Close menu on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        closeMenu();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent body scroll when menu is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
 
   const handleMenuAction = (action: () => void) => {
     action();
@@ -42,14 +64,15 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
       )}
 
       {/* Menu Panel */}
-      <div className={`fixed top-0 left-0 h-full w-80 bg-white shadow-xl transform z-50 ${
+      <div className={`fixed top-0 left-0 h-full w-full sm:w-80 bg-white shadow-xl transform z-50 ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <div className="flex items-center justify-between p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-900">Admin Menu</h2>
           <button
             onClick={closeMenu}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 p-2 -m-2"
+            aria-label="Close menu"
           >
             <X className="h-6 w-6" />
           </button>
