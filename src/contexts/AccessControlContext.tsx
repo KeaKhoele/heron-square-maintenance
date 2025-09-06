@@ -69,38 +69,66 @@ export function AccessControlProvider({ children }: AccessControlProviderProps) 
 
   // Check for existing crew session on mount
   useEffect(() => {
-    // Try localStorage first
-    const storedCrewMember = localStorage.getItem('crewMember');
-    console.log('Checking for stored crew member:', storedCrewMember);
-    
-    if (storedCrewMember) {
-      try {
-        const crewMember = JSON.parse(storedCrewMember);
-        console.log('Setting crew session from localStorage:', crewMember);
-        setCrewSession(crewMember);
-        // Also sync to sessionStorage for mobile compatibility
-        sessionStorage.setItem('crewMember', storedCrewMember);
-        return; // Exit early if we found a valid crew member
-      } catch (error) {
-        console.error('Error parsing localStorage crew member:', error);
-        localStorage.removeItem('crewMember');
+    const checkCrewSession = () => {
+      // Try localStorage first
+      const storedCrewMember = localStorage.getItem('crewMember');
+      console.log('Checking for stored crew member:', storedCrewMember);
+      
+      if (storedCrewMember) {
+        try {
+          const crewMember = JSON.parse(storedCrewMember);
+          console.log('Setting crew session from localStorage:', crewMember);
+          setCrewSession(crewMember);
+          // Also sync to sessionStorage for mobile compatibility
+          sessionStorage.setItem('crewMember', storedCrewMember);
+          return; // Exit early if we found a valid crew member
+        } catch (error) {
+          console.error('Error parsing localStorage crew member:', error);
+          localStorage.removeItem('crewMember');
+        }
       }
-    }
-    
-    // Then check sessionStorage for mobile compatibility
-    const sessionCrewMember = sessionStorage.getItem('crewMember');
-    if (sessionCrewMember) {
-      try {
-        const crewMember = JSON.parse(sessionCrewMember);
-        console.log('Setting crew session from sessionStorage:', crewMember);
-        setCrewSession(crewMember);
-        // Sync to localStorage for persistence
-        localStorage.setItem('crewMember', sessionCrewMember);
-      } catch (error) {
-        console.error('Error parsing sessionStorage crew member:', error);
-        sessionStorage.removeItem('crewMember');
+      
+      // Then check sessionStorage for mobile compatibility
+      const sessionCrewMember = sessionStorage.getItem('crewMember');
+      if (sessionCrewMember) {
+        try {
+          const crewMember = JSON.parse(sessionCrewMember);
+          console.log('Setting crew session from sessionStorage:', crewMember);
+          setCrewSession(crewMember);
+          // Sync to localStorage for persistence
+          localStorage.setItem('crewMember', sessionCrewMember);
+        } catch (error) {
+          console.error('Error parsing sessionStorage crew member:', error);
+          sessionStorage.removeItem('crewMember');
+        }
       }
-    }
+    };
+
+    // Check on mount
+    checkCrewSession();
+
+    // Listen for storage changes (when crew session is updated)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'crewMember') {
+        console.log('Crew member storage changed, rechecking...');
+        checkCrewSession();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also listen for custom events (for same-tab updates)
+    const handleCrewSessionUpdate = () => {
+      console.log('Crew session update event received, rechecking...');
+      checkCrewSession();
+    };
+
+    window.addEventListener('crewSessionUpdated', handleCrewSessionUpdate);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('crewSessionUpdated', handleCrewSessionUpdate);
+    };
   }, []);
 
   // Get current user's access level - moved inside useMemo to fix dependency warning

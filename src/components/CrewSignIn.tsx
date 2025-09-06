@@ -57,13 +57,14 @@ const CrewSignIn: React.FC = () => {
       console.log('Crew member authenticated:', crewMember);
       console.log('Stored in localStorage and sessionStorage, navigating to /admin...');
       
+      // Dispatch custom event to notify context of crew session update
+      window.dispatchEvent(new CustomEvent('crewSessionUpdated'));
+      
       // Success - crew member verified
       setSuccess(true);
       
-      // Shorter delay to ensure context updates properly
-      setTimeout(() => {
-        navigate('/admin', { replace: true });
-      }, 100);
+      // Navigate immediately - context will update via event listener
+      navigate('/admin', { replace: true });
       
     } catch (error: any) {
       console.error('Error during crew authentication:', error);
