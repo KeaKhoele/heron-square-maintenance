@@ -19,36 +19,6 @@ interface IssueFormProps {
   onClose: () => void;
 }
 
-const ADDRESSES = {
-  '34 Arnold Street': 10,
-  '8 Arnold Street': 6,
-  '186 Cole Street': 16,
-  '5 Franklin Road': 17,
-  '2 Grant Street': 3,
-  '11 Highbury Road': 9,
-  '11 Lower Scott Road': 4,
-  '4 Lynton Road': 6,
-  '6 Lynton Road': 6,
-  '6 St Micheal': 3,
-  '1 Nelson Road': 5,
-  '3 Nelson Road': 4,
-  '4 Nelson Road': 4,
-  '5 Nelson Road': 4,
-  '6 Nelson Road': 4,
-  '7 Nelson Road': 4,
-  '8 Nelson Road': 4,
-  '9 Nelson Road': 4,
-  '79 Lower Main Road': 23,
-  '4 Roman Road': 5,
-  '6 Roman Road': 12,
-  '3 Scott Road': 5,
-  '17 Stanley Road': 19,
-  '17 Stanley Road Flatlet': 1,
-  '21 Stanley Road': 15,
-  '25 Stanley Road': 7,
-  '25A Stanley Road': 2,
-  '5 Station Road': 21,
-};
 
 const ISSUE_CATEGORIES = {
   Plumbing: ['Leaking tap/faucet', 'Blocked drain', 'Toilet not flushing', 'Burst pipe'],
