@@ -16,11 +16,6 @@ export class EmailService {
   // Send notification to maintenance crew when new issue is submitted
   async sendMaintenanceNotification(issue: Issue): Promise<void> {
     try {
-      if (!this.RESEND_API_KEY) {
-        console.warn('Resend API key not configured, skipping email notification');
-        return;
-      }
-
       // Get admin emails from Google Sheets (you'll need to implement this)
       const adminEmails = await this.getAdminEmails();
       
@@ -30,29 +25,22 @@ export class EmailService {
       }
 
       const emailData = {
-        from: this.FROM_EMAIL,
         to: adminEmails,
         subject: 'New Maintenance Request Submitted',
-        html: this.generateMaintenanceEmailHTML(issue),
-        attachments: [
-          {
-            filename: 'maintenance_issues.xlsx',
-            content: await this.getSpreadsheetAttachment()
-          }
-        ]
+        html: this.generateMaintenanceEmailHTML(issue)
       };
 
-      const response = await fetch('https://api.resend.com/emails', {
+      const response = await fetch('/.netlify/functions/send-email', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.RESEND_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(emailData)
+        body: JSON.stringify({ emailData })
       });
 
       if (!response.ok) {
-        throw new Error(`Resend API error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(`Email service error: ${response.status} ${errorData.error || response.statusText}`);
       }
 
       console.log('Maintenance notification sent successfully');
@@ -65,37 +53,25 @@ export class EmailService {
   // Send notification to admins (kea.khoele@gmail.com and enquiries@heronsquare.co.za)
   async sendAdminNotification(issue: Issue): Promise<void> {
     try {
-      if (!this.RESEND_API_KEY) {
-        console.warn('Resend API key not configured, skipping admin notification');
-        return;
-      }
-
       const adminEmails = ['kea.khoele@gmail.com', 'enquiries@heronsquare.co.za'];
 
       const emailData = {
-        from: this.FROM_EMAIL,
         to: adminEmails,
         subject: 'New Maintenance Request - Admin Notification',
-        html: this.generateAdminEmailHTML(issue),
-        attachments: [
-          {
-            filename: 'maintenance_issues.xlsx',
-            content: await this.getSpreadsheetAttachment()
-          }
-        ]
+        html: this.generateAdminEmailHTML(issue)
       };
 
-      const response = await fetch('https://api.resend.com/emails', {
+      const response = await fetch('/.netlify/functions/send-email', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${this.RESEND_API_KEY}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(emailData)
+        body: JSON.stringify({ emailData })
       });
 
       if (!response.ok) {
-        throw new Error(`Resend API error: ${response.status} ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(`Email service error: ${response.status} ${errorData.error || response.statusText}`);
       }
 
       console.log('Admin notification sent successfully');

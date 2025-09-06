@@ -1,0 +1,9 @@
+{
+  "name": "netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify serverless functions for Heron Square maintenance app",
+  "main": "index.js",
+  "dependencies": {
+    "resend": "^3.2.0"
+  }
+}
