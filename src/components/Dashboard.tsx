@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { Plus, LogOut, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, LogOut, AlertCircle } from 'lucide-react';
 import IssueForm from './IssueForm';
 import OfflineIndicator from './OfflineIndicator';
 import LoadingSpinner from './LoadingSpinner';

@@ -52,8 +52,6 @@ const AdminDashboard: React.FC = () => {
   const [newCrewEmail, setNewCrewEmail] = useState('');
   const [newCrewName, setNewCrewName] = useState('');
 
-  const isPrimaryCrew = currentUserLevel === AccessLevel.PRIMARY_CREW;
-
   const loadIssues = useCallback(async () => {
     setLoading(true);
     const fetchedIssues = await handleAsyncError(
