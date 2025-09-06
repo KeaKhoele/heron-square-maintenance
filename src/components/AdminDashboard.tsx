@@ -78,8 +78,20 @@ const AdminDashboard: React.FC = () => {
     };
   }, [loadIssues]);
 
-  const handleStatusUpdate = async (issueId: string, newStatus: 'In Process' | 'Complete') => {
+  const handleStatusUpdate = async (issueId: string, currentStatus: 'New' | 'In Process' | 'Complete') => {
     try {
+      // For Secondary Crew, only allow sequential progression
+      let newStatus: 'In Process' | 'Complete';
+      
+      if (currentStatus === 'New') {
+        newStatus = 'In Process';
+      } else if (currentStatus === 'In Process') {
+        newStatus = 'Complete';
+      } else {
+        // If already Complete, don't allow going back
+        return;
+      }
+
       await updateIssueStatus(issueId, newStatus);
       setIssues(prev => prev.map(issue => 
         issue.id === issueId ? { ...issue, status: newStatus } : issue
