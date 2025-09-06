@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Building2, Plus, Trash2, Users, AlertCircle, X } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
-import { Property, Tenant, PropertyWithTenants } from '../types/Property';
+import { PropertyWithTenants } from '../types/Property';
 
 interface TenantManagementProps {
   onClose: () => void;
