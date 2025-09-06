@@ -19,12 +19,10 @@ const Dashboard: React.FC = () => {
   const { showSuccess, showError } = useNotifications();
   const [showIssueForm, setShowIssueForm] = useState(false);
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const loadUserIssues = useCallback(async () => {
     if (!currentUser?.email) return;
     
-    setLoading(true);
     const userIssues = await handleAsyncError(
       () => getUserIssues(currentUser.email!),
       'loadUserIssues'
@@ -33,7 +31,6 @@ const Dashboard: React.FC = () => {
     if (userIssues) {
       setIssues(userIssues);
     }
-    setLoading(false);
   }, [currentUser?.email, handleAsyncError]);
 
   useEffect(() => {
@@ -71,16 +68,6 @@ const Dashboard: React.FC = () => {
     }
   };
 
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg text-gray-600">Loading your issues...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">

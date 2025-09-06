@@ -40,7 +40,6 @@ const AdminDashboard: React.FC = () => {
   } = useAccessControl();
   
   const [issues, setIssues] = useState<Issue[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'New' | 'In Process' | 'Complete'>('all');
   const [showCrewManagement, setShowCrewManagement] = useState(false);
   const [showTenantManagement, setShowTenantManagement] = useState(false);
@@ -52,7 +51,6 @@ const AdminDashboard: React.FC = () => {
   const [newCrewName, setNewCrewName] = useState('');
 
   const loadIssues = useCallback(async () => {
-    setLoading(true);
     const fetchedIssues = await handleAsyncError(
       () => getAllIssues(),
       'loadIssues'
@@ -61,7 +59,6 @@ const AdminDashboard: React.FC = () => {
     if (fetchedIssues) {
       setIssues(fetchedIssues);
     }
-    setLoading(false);
   }, [handleAsyncError]);
 
   useEffect(() => {
@@ -123,8 +120,10 @@ const AdminDashboard: React.FC = () => {
 
       await updateIssueStatus(issueId, newStatus);
       
-      // Refresh the issues list to show updated status
-      await loadIssues();
+      // Update the local state immediately for instant feedback
+      setIssues(prev => prev.map(issue => 
+        issue.id === issueId ? { ...issue, status: newStatus } : issue
+      ));
       
       showSuccess(
         'Status Updated',
@@ -200,17 +199,6 @@ const AdminDashboard: React.FC = () => {
   const filteredIssues = issues.filter(issue => 
     filter === 'all' ? true : issue.status === filter
   );
-
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg text-gray-600">Loading maintenance issues...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
