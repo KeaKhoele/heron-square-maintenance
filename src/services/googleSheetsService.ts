@@ -1,4 +1,5 @@
 import { Issue } from '../types/Issue';
+import { handleError, ErrorCodes, retryWithBackoff } from '../utils/errorHandling';
 
 // Google Sheets API configuration - Updated with new service account credentials
 const SPREADSHEET_ID = process.env.REACT_APP_GOOGLE_SPREADSHEET_ID;
@@ -156,24 +157,31 @@ export class GoogleSheetsService {
       }
 
       if (!SPREADSHEET_ID) {
-        console.error('Google Sheets Spreadsheet ID not configured');
-        throw new Error('Google Sheets Spreadsheet ID not configured');
+        throw handleError(new Error('Google Sheets Spreadsheet ID not configured'), 'fetchAllIssues');
       }
 
-      const accessToken = await this.getAccessToken();
-      const response = await fetch(
-        `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
+      // Use retry logic for network requests
+      const accessToken = await retryWithBackoff(() => this.getAccessToken(), 3, 1000);
+      
+      const response = await retryWithBackoff(
+        () => fetch(
+          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
           }
-        }
+        ),
+        3,
+        1000
       );
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Google Sheets API error:', response.status, errorText);
-        throw new Error(`Google Sheets API error: ${response.status}`);
+        throw handleError(
+          new Error(`Google Sheets API error: ${response.status} - ${errorText}`),
+          'fetchAllIssues'
+        );
       }
 
       const data = await response.json();
@@ -202,7 +210,11 @@ export class GoogleSheetsService {
     } catch (error) {
       console.error('Error fetching from Google Sheets:', error);
       // Fallback to localStorage if Google Sheets fails
-      return this.getFromLocalStorage();
+      const localIssues = this.getFromLocalStorage();
+      if (localIssues.length > 0) {
+        console.log(`Using ${localIssues.length} issues from localStorage as fallback`);
+      }
+      return localIssues;
     }
   }
 

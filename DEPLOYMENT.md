@@ -108,3 +108,4 @@ REACT_APP_FIREBASE_APP_ID=your_app_id
 
 Your app will be accessible worldwide after deployment! 🌍
 
+

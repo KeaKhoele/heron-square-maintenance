@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { AccessControlProvider } from './contexts/AccessControlContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import Home from './components/Home';
 import Dashboard from './components/Dashboard';
 import CrewSignIn from './components/CrewSignIn';
@@ -13,9 +14,10 @@ function App() {
   return (
     <AuthProvider>
       <AccessControlProvider>
-        <Router>
-          <div className="App min-h-screen bg-gray-50">
-            <Routes>
+        <NotificationProvider>
+          <Router>
+            <div className="App min-h-screen bg-gray-50">
+              <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/crew-signin" element={<CrewSignIn />} />
               <Route path="/mobile-test" element={<div className="p-8 text-center">
@@ -47,6 +49,7 @@ function App() {
             </Routes>
           </div>
         </Router>
+        </NotificationProvider>
       </AccessControlProvider>
     </AuthProvider>
   );

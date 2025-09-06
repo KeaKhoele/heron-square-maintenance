@@ -1,6 +1,7 @@
 import { Issue } from '../types/Issue';
 import { googleSheetsService } from './googleSheetsService';
 import { emailService } from './emailService';
+import { handleError, ErrorCodes, retryWithBackoff, waitForOnline } from '../utils/errorHandling';
 
 // Network status tracking
 let isOnline = navigator.onLine;
@@ -24,20 +25,27 @@ const processOfflineQueue = async () => {
   
   console.log(`Processing ${offlineQueue.length} queued actions...`);
   
+  // Wait for stable connection
+  await waitForOnline();
+  
+  const failedActions: Array<{ action: string; data: any }> = [];
+  
   for (const queuedAction of offlineQueue) {
     try {
       if (queuedAction.action === 'submitIssue') {
-        await submitIssue(queuedAction.data);
+        await retryWithBackoff(() => submitIssue(queuedAction.data), 3, 1000);
       } else if (queuedAction.action === 'updateStatus') {
-        await updateIssueStatus(queuedAction.data.issueId, queuedAction.data.status);
+        await retryWithBackoff(() => updateIssueStatus(queuedAction.data.issueId, queuedAction.data.status), 3, 1000);
       }
     } catch (error) {
       console.error('Error processing queued action:', error);
+      failedActions.push(queuedAction);
     }
   }
   
-  offlineQueue = [];
-  console.log('Offline queue processed');
+  // Keep failed actions for next retry
+  offlineQueue = failedActions;
+  console.log(`Offline queue processed. ${failedActions.length} actions failed and will be retried.`);
 };
 
 
@@ -78,17 +86,38 @@ const safeLocalStorage = {
 // Main issue service functions - now using Google Sheets as primary source
 export const submitIssue = async (issueData: Omit<Issue, 'id' | 'timestamp' | 'status'>): Promise<Issue> => {
   try {
-    // Use Google Sheets service as primary
-    const newIssue = await googleSheetsService.submitIssue(issueData);
-    
-    // Send email notifications
-    try {
-      await emailService.sendMaintenanceNotification(newIssue);
-      await emailService.sendAdminNotification(newIssue);
-    } catch (emailError) {
-      console.error('Email notification failed:', emailError);
-      // Don't fail the main submission if email fails
+    // Validate input data
+    if (!issueData.name?.trim()) {
+      throw handleError(new Error('Name is required'), 'submitIssue');
     }
+    if (!issueData.address?.trim()) {
+      throw handleError(new Error('Address is required'), 'submitIssue');
+    }
+    if (!issueData.unit?.trim()) {
+      throw handleError(new Error('Unit is required'), 'submitIssue');
+    }
+    if (!issueData.userEmail?.trim()) {
+      throw handleError(new Error('User email is required'), 'submitIssue');
+    }
+
+    // Use Google Sheets service as primary with retry logic
+    const newIssue = await retryWithBackoff(
+      () => googleSheetsService.submitIssue(issueData),
+      3,
+      1000
+    );
+    
+    // Send email notifications (non-blocking)
+    Promise.all([
+      emailService.sendMaintenanceNotification(newIssue).catch(error => {
+        console.warn('Maintenance notification failed:', error);
+        return null;
+      }),
+      emailService.sendAdminNotification(newIssue).catch(error => {
+        console.warn('Admin notification failed:', error);
+        return null;
+      })
+    ]);
     
     // Trigger update event
     window.dispatchEvent(new CustomEvent('issueUpdated', { 
@@ -97,7 +126,7 @@ export const submitIssue = async (issueData: Omit<Issue, 'id' | 'timestamp' | 's
     
     return newIssue;
   } catch (error) {
-    console.error('Google Sheets submission failed, falling back to localStorage:', error);
+    const appError = handleError(error, 'submitIssue');
     
     // Fallback to localStorage
     const newIssue: Issue = {
@@ -117,7 +146,8 @@ export const submitIssue = async (issueData: Omit<Issue, 'id' | 'timestamp' | 's
       offlineQueue.push({ action: 'submitIssue', data: issueData });
     }
     
-    return newIssue;
+    // Re-throw the error for the UI to handle
+    throw appError;
   }
 };
 
