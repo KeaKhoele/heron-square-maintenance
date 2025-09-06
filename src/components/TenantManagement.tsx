@@ -28,10 +28,6 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
     email: ''
   });
 
-  useEffect(() => {
-    loadProperties();
-  }, [loadProperties]);
-
   const loadProperties = useCallback(() => {
     const propertiesWithTenants = propertyService.getPropertiesWithTenants();
     setProperties(propertiesWithTenants);
@@ -39,6 +35,10 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
       setSelectedProperty(propertiesWithTenants[0].id);
     }
   }, [selectedProperty]);
+
+  useEffect(() => {
+    loadProperties();
+  }, [loadProperties]);
 
   const handleAddProperty = () => {
     if (!newProperty.name || !newProperty.address || newProperty.units < 1) {
