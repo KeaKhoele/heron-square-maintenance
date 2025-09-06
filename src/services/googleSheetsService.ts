@@ -192,26 +192,27 @@ export class GoogleSheetsService {
         .filter((row: any[]) => {
           // Filter out rows that look like headers or are empty
           const hasValidData = row && row.length > 0 && 
-            row[5] && // Tenant Name
-            row[3] && // Property Address
-            row[4] && // Unit Number
-            row[5] !== 'Tenant Name' && // Not a header row
-            row[3] !== 'Property Address' && // Not a header row
-            row[4] !== 'Unit Number'; // Not a header row
+            row[0] && // Issue ID
+            row[6] && // Tenant Name
+            row[4] && // Property Address
+            row[5] && // Unit Number
+            row[6] !== 'Tenant Name' && // Not a header row
+            row[4] !== 'Property Address' && // Not a header row
+            row[5] !== 'Unit Number'; // Not a header row
           return hasValidData;
         })
         .map((row: any[]) => ({
-          id: row[0] || Date.now().toString(),
-          timestamp: row[8] || new Date().toISOString(), // Date and Time column
-          name: row[5] || '', // Tenant Name column
-          address: row[3] || '', // Property Address column
-          unit: row[4] || '', // Unit Number column
-          category: (row[0] as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General') || 'General', // Issue Category column
-          issueType: row[1] || '', // Issue Type column
-          description: row[2] || '', // Issue Description column
-          urgency: (row[6] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
-          status: (row[7] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
-          userEmail: row[9] || '' // User Email column
+          id: row[0] || Date.now().toString(), // Issue ID column
+          timestamp: row[9] || new Date().toISOString(), // Date and Time column
+          name: row[6] || '', // Tenant Name column
+          address: row[4] || '', // Property Address column
+          unit: row[5] || '', // Unit Number column
+          category: (row[1] as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General') || 'General', // Issue Category column
+          issueType: row[2] || '', // Issue Type column
+          description: row[3] || '', // Issue Description column
+          urgency: (row[7] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
+          status: (row[8] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
+          userEmail: row[10] || '' // User Email column
         }));
 
       // Update cache
@@ -248,6 +249,7 @@ export class GoogleSheetsService {
         try {
           const accessToken = await this.getAccessToken();
           const rowData = [
+            newIssue.id, // Issue ID (first column)
             newIssue.category, // Issue Category
             newIssue.issueType, // Issue Type
             newIssue.description, // Issue Description
@@ -347,9 +349,9 @@ export class GoogleSheetsService {
           throw new Error('Issue not found in spreadsheet');
         }
         
-        // Update the status in column H
+        // Update the status in column I (index 8)
         const updateResponse = await fetch(
-          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!H${rowNumber}?valueInputOption=RAW`,
+          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!I${rowNumber}?valueInputOption=RAW`,
           {
             method: 'PUT',
             headers: {
