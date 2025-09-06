@@ -40,6 +40,10 @@ interface NotificationProviderProps {
 export const NotificationProvider: React.FC<NotificationProviderProps> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationState[]>([]);
 
+  const removeNotification = useCallback((id: string) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  }, []);
+
   const showNotification = useCallback((notification: Omit<NotificationState, 'id'>) => {
     const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
     const newNotification: NotificationState = {
@@ -73,10 +77,6 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
   const showInfo = useCallback((title: string, message: string, duration?: number) => {
     showNotification({ type: 'info', title, message, duration });
   }, [showNotification]);
-
-  const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-  }, []);
 
   const clearAllNotifications = useCallback(() => {
     setNotifications([]);
