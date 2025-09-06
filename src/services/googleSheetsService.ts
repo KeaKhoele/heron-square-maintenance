@@ -192,7 +192,6 @@ export class GoogleSheetsService {
         .filter((row: any[]) => {
           // Filter out rows that look like headers or are empty
           const hasValidData = row && row.length > 0 && 
-            row[0] && // Issue ID
             row[6] && // Tenant Name
             row[4] && // Property Address
             row[5] && // Unit Number
@@ -201,19 +200,42 @@ export class GoogleSheetsService {
             row[5] !== 'Unit Number'; // Not a header row
           return hasValidData;
         })
-        .map((row: any[]) => ({
-          id: row[0] || Date.now().toString(), // Issue ID column
-          timestamp: row[9] || new Date().toISOString(), // Date and Time column
-          name: row[6] || '', // Tenant Name column
-          address: row[4] || '', // Property Address column
-          unit: row[5] || '', // Unit Number column
-          category: (row[1] as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General') || 'General', // Issue Category column
-          issueType: row[2] || '', // Issue Type column
-          description: row[3] || '', // Issue Description column
-          urgency: (row[7] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
-          status: (row[8] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
-          userEmail: row[10] || '' // User Email column
-        }));
+        .map((row: any[]) => {
+          // Check if this is the new format (with Issue ID in column A) or old format
+          const hasIssueIdColumn = row[0] && !row[1]?.includes('Category') && row.length > 10;
+          
+          if (hasIssueIdColumn) {
+            // New format: Issue ID in column A
+            return {
+              id: row[0] || Date.now().toString(), // Issue ID column
+              timestamp: row[9] || new Date().toISOString(), // Date and Time column
+              name: row[6] || '', // Tenant Name column
+              address: row[4] || '', // Property Address column
+              unit: row[5] || '', // Unit Number column
+              category: (row[1] as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General') || 'General', // Issue Category column
+              issueType: row[2] || '', // Issue Type column
+              description: row[3] || '', // Issue Description column
+              urgency: (row[7] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
+              status: (row[8] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
+              userEmail: row[10] || '' // User Email column
+            };
+          } else {
+            // Old format: No Issue ID column, generate one
+            return {
+              id: Date.now().toString() + Math.random().toString(36).substr(2, 9), // Generate unique ID
+              timestamp: row[8] || new Date().toISOString(), // Date and Time column
+              name: row[5] || '', // Tenant Name column
+              address: row[3] || '', // Property Address column
+              unit: row[4] || '', // Unit Number column
+              category: (row[0] as 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General') || 'General', // Issue Category column
+              issueType: row[1] || '', // Issue Type column
+              description: row[2] || '', // Issue Description column
+              urgency: (row[6] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
+              status: (row[7] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
+              userEmail: row[9] || '' // User Email column
+            };
+          }
+        });
 
       // Update cache
       this.cache = issues;
@@ -337,21 +359,28 @@ export class GoogleSheetsService {
 
         // Find the row that contains this issue ID
         let rowNumber = -1;
+        let statusColumn = 'H'; // Default to old format (column H)
+        
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
           if (row && row[0] === issueId) {
             rowNumber = i + 1; // +1 because Google Sheets is 1-indexed
+            statusColumn = 'I'; // New format uses column I
             break;
           }
         }
 
+        // If not found by ID, try to find by other means (for old format issues)
         if (rowNumber === -1) {
-          throw new Error('Issue not found in spreadsheet');
+          // This is a fallback for issues that don't have IDs yet
+          // We'll need to find them by other unique identifiers
+          console.log('Issue not found by ID, this might be an old format issue');
+          throw new Error('Issue not found in spreadsheet - may need to add Issue ID column');
         }
         
-        // Update the status in column I (index 8)
+        // Update the status in the correct column
         const updateResponse = await fetch(
-          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!I${rowNumber}?valueInputOption=RAW`,
+          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!${statusColumn}${rowNumber}?valueInputOption=RAW`,
           {
             method: 'PUT',
             headers: {
