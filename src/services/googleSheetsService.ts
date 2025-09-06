@@ -1,6 +1,6 @@
 import { Issue } from '../types/Issue';
 
-// Google Sheets API configuration
+// Google Sheets API configuration - Updated with new service account credentials
 const SPREADSHEET_ID = process.env.REACT_APP_GOOGLE_SPREADSHEET_ID;
 const SHEET_NAME = 'Sheet1';
 
