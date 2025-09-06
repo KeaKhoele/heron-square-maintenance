@@ -257,6 +257,14 @@ export class GoogleSheetsService {
   private generateUniqueId(): string {
     return Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9) + '-' + Math.random().toString(36).substr(2, 9);
   }
+
+  // Helper function to get Cape Town timezone timestamp
+  private getCapeTownTimestamp(): string {
+    const now = new Date();
+    // Cape Town is UTC+2 (SAST - South African Standard Time)
+    const capeTownTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+    return capeTownTime.toISOString().replace('Z', '+02:00');
+  }
   async submitIssue(issueData: Omit<Issue, 'id' | 'timestamp' | 'status'>): Promise<Issue> {
     try {
       const newIssue: Issue = {
