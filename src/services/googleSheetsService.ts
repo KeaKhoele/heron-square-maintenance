@@ -313,19 +313,42 @@ export class GoogleSheetsService {
   async updateIssueStatus(issueId: string, status: 'New' | 'In Process' | 'Complete'): Promise<void> {
     try {
       if (SPREADSHEET_ID && SERVICE_ACCOUNT_EMAIL && SERVICE_ACCOUNT_PRIVATE_KEY) {
-        // Find the row number for this issue
-        const issues = await this.fetchAllIssues();
-        const issueIndex = issues.findIndex(issue => issue.id === issueId);
-        
-        if (issueIndex === -1) {
-          throw new Error('Issue not found');
-        }
-
-        // Update in Google Sheets (row + 2 because of 0-indexing and header row)
-        const rowNumber = issueIndex + 2;
+        // Get raw data from Google Sheets to find the correct row
         const accessToken = await this.getAccessToken();
         
         const response = await fetch(
+          `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A:J`,
+          {
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Google Sheets API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const rows = data.values || [];
+
+        // Find the row that contains this issue ID
+        let rowNumber = -1;
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          if (row && row[0] === issueId) {
+            rowNumber = i + 1; // +1 because Google Sheets is 1-indexed
+            break;
+          }
+        }
+
+        if (rowNumber === -1) {
+          throw new Error('Issue not found in spreadsheet');
+        }
+        
+        // Update the status in column H
+        const updateResponse = await fetch(
           `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!H${rowNumber}?valueInputOption=RAW`,
           {
             method: 'PUT',
@@ -339,13 +362,13 @@ export class GoogleSheetsService {
           }
         );
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Google Sheets update error:', response.status, errorText);
-          throw new Error(`Failed to update Google Sheets: ${response.status}`);
+        if (!updateResponse.ok) {
+          const errorText = await updateResponse.text();
+          console.error('Google Sheets update error:', updateResponse.status, errorText);
+          throw new Error(`Failed to update Google Sheets: ${updateResponse.status}`);
         }
 
-        console.log('Successfully updated issue status in Google Sheets');
+        console.log(`Successfully updated issue ${issueId} status to ${status} in row ${rowNumber}`);
         // Update cache
         const issue = this.cache.find(i => i.id === issueId);
         if (issue) {
