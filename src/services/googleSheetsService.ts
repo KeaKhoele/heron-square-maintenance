@@ -1,5 +1,5 @@
 import { Issue } from '../types/Issue';
-import { handleError, ErrorCodes, retryWithBackoff } from '../utils/errorHandling';
+import { handleError, retryWithBackoff } from '../utils/errorHandling';
 
 // Google Sheets API configuration - Updated with new service account credentials
 const SPREADSHEET_ID = process.env.REACT_APP_GOOGLE_SPREADSHEET_ID;

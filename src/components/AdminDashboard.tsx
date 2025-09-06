@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAccessControl, AccessLevel } from '../contexts/AccessControlContext';
 import {
@@ -20,7 +20,7 @@ import LoadingSpinner from './LoadingSpinner';
 import AnimatedButton from './AnimatedButton';
 import Card, { IssueCard } from './Card';
 import EmptyState, { StatsCard } from './EmptyState';
-import { getAllIssues, updateIssueStatus, submitIssue, getNetworkStatus, getOfflineQueueLength } from '../services/issueService';
+import { getAllIssues, updateIssueStatus, submitIssue } from '../services/issueService';
 import { Issue } from '../types/Issue';
 import { useErrorHandler } from '../utils/errorHandling';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -54,6 +54,19 @@ const AdminDashboard: React.FC = () => {
 
   const isPrimaryCrew = currentUserLevel === AccessLevel.PRIMARY_CREW;
 
+  const loadIssues = useCallback(async () => {
+    setLoading(true);
+    const fetchedIssues = await handleAsyncError(
+      () => getAllIssues(),
+      'loadIssues'
+    );
+    
+    if (fetchedIssues) {
+      setIssues(fetchedIssues);
+    }
+    setLoading(false);
+  }, [handleAsyncError]);
+
   useEffect(() => {
     loadIssues();
     
@@ -69,20 +82,7 @@ const AdminDashboard: React.FC = () => {
     return () => {
       window.removeEventListener('issueUpdated', handleIssueUpdate);
     };
-  }, []);
-
-  const loadIssues = async () => {
-    setLoading(true);
-    const fetchedIssues = await handleAsyncError(
-      () => getAllIssues(),
-      'loadIssues'
-    );
-    
-    if (fetchedIssues) {
-      setIssues(fetchedIssues);
-    }
-    setLoading(false);
-  };
+  }, [loadIssues]);
 
   const handleStatusUpdate = async (issueId: string, newStatus: 'In Process' | 'Complete') => {
     try {
@@ -104,45 +104,6 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  const handleStatusToggle = async (issueId: string, currentStatus: string) => {
-    try {
-      let newStatus: 'In Process' | 'Complete';
-      
-      if (isPrimaryCrew) {
-        // Primary Crew can toggle between any status
-        newStatus = currentStatus === 'New' ? 'In Process' : 
-                   currentStatus === 'In Process' ? 'Complete' : 'In Process';
-      } else {
-        // Secondary Crew can only progress sequentially
-        if (currentStatus === 'New') {
-          newStatus = 'In Process';
-        } else if (currentStatus === 'In Process') {
-          newStatus = 'Complete';
-        } else {
-          // If already Complete, don't allow going back
-          return;
-        }
-      }
-
-      await updateIssueStatus(issueId, newStatus);
-      
-      // Refresh the issues list to show updated status
-      await loadIssues();
-      
-      showSuccess(
-        'Status Updated',
-        `Issue status has been updated to ${newStatus}`,
-        3000
-      );
-      
-    } catch (error) {
-      showError(
-        'Update Failed',
-        'Failed to update issue status. Please try again.',
-        5000
-      );
-    }
-  };
 
   const handleCrewIssueSubmit = async (data: any) => {
     try {
@@ -203,27 +164,6 @@ const AdminDashboard: React.FC = () => {
     filter === 'all' ? true : issue.status === filter
   );
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Complete':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'In Process':
-        return <Clock className="h-5 w-5 text-yellow-500" />;
-      default:
-        return <AlertCircle className="h-5 w-5 text-blue-500" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Complete':
-        return 'bg-green-100 text-green-800';
-      case 'In Process':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-blue-100 text-blue-800';
-    }
-  };
 
   if (loading) {
     return (

@@ -56,7 +56,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
         removeNotification(id);
       }, newNotification.duration);
     }
-  }, []);
+  }, [removeNotification]);
 
   const showSuccess = useCallback((title: string, message: string, duration?: number) => {
     showNotification({ type: 'success', title, message, duration });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Wifi, WifiOff, AlertCircle, CheckCircle } from 'lucide-react';
-import { getNetworkStatus, getOfflineQueueLength } from '../services/issueService';
+import { getOfflineQueueLength } from '../services/issueService';
 
 interface OfflineIndicatorProps {
   className?: string;

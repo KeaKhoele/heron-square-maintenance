@@ -1,7 +1,7 @@
 import { Issue } from '../types/Issue';
 import { googleSheetsService } from './googleSheetsService';
 import { emailService } from './emailService';
-import { handleError, ErrorCodes, retryWithBackoff, waitForOnline } from '../utils/errorHandling';
+import { handleError, retryWithBackoff, waitForOnline } from '../utils/errorHandling';
 
 // Network status tracking
 let isOnline = navigator.onLine;
