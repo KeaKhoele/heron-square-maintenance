@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Trash2, AlertCircle, X } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
-import { Property } from '../types/Property';
 
 interface PropertyManagementProps {
   onClose: () => void;
 }
 
 const PropertyManagement: React.FC<PropertyManagementProps> = ({ onClose }) => {
-  const [properties, setProperties] = useState<Property[]>([]);
+  const [properties, setProperties] = useState<Array<{id: string, address: string, units: number}>>([]);
   const [showAddProperty, setShowAddProperty] = useState(false);
   const [showRemoveProperty, setShowRemoveProperty] = useState(false);
   const [propertyToRemove, setPropertyToRemove] = useState<string>('');
@@ -73,7 +72,10 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({ onClose }) => {
         <div className="flex items-center justify-between p-6 border-b">
           <div className="flex items-center">
             <Building2 className="h-6 w-6 text-green-600 mr-3" />
-            <h2 className="text-2xl font-bold text-gray-900">Property Management</h2>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">Property Management</h2>
+              <p className="text-sm text-gray-600">Manage properties available in issue submission forms</p>
+            </div>
           </div>
           <button
             onClick={onClose}
