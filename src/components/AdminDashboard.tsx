@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import CrewIssueForm from './CrewIssueForm';
 import TenantManagement from './TenantManagement';
+import PropertyManagement from './PropertyManagement';
+import HamburgerMenu from './HamburgerMenu';
 import { getAllIssues, updateIssueStatus, submitIssue, getNetworkStatus, getOfflineQueueLength } from '../services/issueService';
 import { Issue } from '../types/Issue';
 
@@ -35,6 +37,7 @@ const AdminDashboard: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'New' | 'In Process' | 'Complete'>('all');
   const [showCrewManagement, setShowCrewManagement] = useState(false);
   const [showTenantManagement, setShowTenantManagement] = useState(false);
+  const [showPropertyManagement, setShowPropertyManagement] = useState(false);
   const [showAddCrew, setShowAddCrew] = useState(false);
   const [newCrewAccessLevel, setNewCrewAccessLevel] = useState<AccessLevel>(AccessLevel.SECONDARY_CREW);
   const [showCrewIssueForm, setShowCrewIssueForm] = useState(false);
@@ -220,6 +223,14 @@ const AdminDashboard: React.FC = () => {
         <div className="w-full px-2 sm:px-4 lg:px-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <div className="flex items-center space-x-2 sm:space-x-4">
+              {/* Hamburger Menu for Primary Crew */}
+              {canManageUsers && (
+                <HamburgerMenu
+                  onManageCrew={() => setShowCrewManagement(true)}
+                  onManageProperties={() => setShowPropertyManagement(true)}
+                  onManageTenants={() => setShowTenantManagement(true)}
+                />
+              )}
               <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
               <div>
                 <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
@@ -266,27 +277,6 @@ const AdminDashboard: React.FC = () => {
                 Submit Issue
               </button>
               
-              {/* Manage Crew Button (Primary Crew Only) */}
-              {canManageUsers && (
-                <button
-                  onClick={() => setShowCrewManagement(true)}
-                  className="flex items-center px-2 py-1 sm:px-4 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm sm:text-base"
-                >
-                  <Users className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  Manage Crew
-                </button>
-              )}
-
-              {/* Manage Tenants Button (Primary Crew Only) */}
-              {canManageUsers && (
-                <button
-                  onClick={() => setShowTenantManagement(true)}
-                  className="flex items-center px-2 py-1 sm:px-4 sm:py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm sm:text-base"
-                >
-                  <Building2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  Manage Tenants
-                </button>
-              )}
               
               <button
                 onClick={handleLogout}
@@ -604,6 +594,13 @@ const AdminDashboard: React.FC = () => {
       {showTenantManagement && (
         <TenantManagement
           onClose={() => setShowTenantManagement(false)}
+        />
+      )}
+
+      {/* Property Management Modal */}
+      {showPropertyManagement && (
+        <PropertyManagement
+          onClose={() => setShowPropertyManagement(false)}
         />
       )}
     </div>

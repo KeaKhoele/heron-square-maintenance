@@ -34,6 +34,23 @@ export class PropertyService {
       this.properties = defaultProperties;
       this.saveToStorage();
     }
+
+    // Initialize default tenant for testing
+    if (this.tenants.length === 0) {
+      const defaultTenant: Tenant = {
+        id: 'tenant-uct-test',
+        email: 'khlkea005@myuct.ac.za',
+        name: 'UCT Test User',
+        propertyId: 'heron-square-1',
+        unit: 'Unit 1',
+        moveInDate: new Date().toISOString(),
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: 'system'
+      };
+      this.tenants = [defaultTenant];
+      this.saveToStorage();
+    }
   }
 
   // Load data from localStorage

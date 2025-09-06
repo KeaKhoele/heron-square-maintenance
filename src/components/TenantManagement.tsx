@@ -25,8 +25,7 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
   // Add Tenant Form
   const [newTenant, setNewTenant] = useState({
     name: '',
-    email: '',
-    unit: ''
+    email: ''
   });
 
   useEffect(() => {
@@ -82,21 +81,22 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
   };
 
   const handleAddTenant = () => {
-    if (!newTenant.name || !newTenant.email || !newTenant.unit || !selectedProperty) {
+    if (!newTenant.name || !newTenant.email || !selectedProperty) {
       alert('Please fill in all fields');
       return;
     }
 
     try {
+      // Assign to Unit 1 by default (can be changed later)
       propertyService.addTenant(
         newTenant.email,
         newTenant.name,
         selectedProperty,
-        newTenant.unit,
+        'Unit 1',
         'admin' // You can get this from context
       );
       
-      setNewTenant({ name: '', email: '', unit: '' });
+      setNewTenant({ name: '', email: '' });
       setShowAddTenant(false);
       loadProperties();
     } catch (error) {
@@ -320,21 +320,6 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g., john@example.com"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Unit
-                  </label>
-                  <select
-                    value={newTenant.unit}
-                    onChange={(e) => setNewTenant({ ...newTenant, unit: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Unit</option>
-                    {availableUnits.map(unit => (
-                      <option key={unit} value={unit}>{unit}</option>
-                    ))}
-                  </select>
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-6">

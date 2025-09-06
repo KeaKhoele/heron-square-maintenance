@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { propertyService } from '../services/propertyService';
-import { Property } from '../types/Property';
 
 interface IssueFormData {
   name: string;
@@ -61,7 +59,6 @@ const ISSUE_CATEGORIES = {
 
 const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
   const { currentUser } = useAuth();
-  const [properties, setProperties] = useState<Property[]>([]);
   const [formData, setFormData] = useState<IssueFormData>({
     name: '',
     address: '',
@@ -79,15 +76,6 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
       setFormData(prev => ({ ...prev, userEmail: currentUser.email || '' }));
     }
   }, [currentUser?.email]);
-
-  // Load properties on component mount
-  useEffect(() => {
-    const loadedProperties = propertyService.getAllProperties();
-    setProperties(loadedProperties);
-    if (loadedProperties.length > 0) {
-      setFormData(prev => ({ ...prev, address: loadedProperties[0].address }));
-    }
-  }, []);
 
   const [errors, setErrors] = useState<Partial<Record<keyof IssueFormData, string>>>({});
   const [loading, setLoading] = useState(false);
@@ -126,9 +114,8 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
   };
 
   const generateUnits = (address: string) => {
-    const property = properties.find(p => p.address === address);
-    if (!property) return [];
-    return Array.from({ length: property.units }, (_, i) => `Unit ${i + 1}`);
+    const count = ADDRESSES[address as keyof typeof ADDRESSES] || 0;
+    return Array.from({ length: count }, (_, i) => `Unit ${i + 1}`);
   };
 
   return (
@@ -169,10 +156,8 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
               className={`w-full px-3 py-2 border rounded-md ${errors.address ? 'border-red-300' : 'border-gray-300'}`}
             >
               <option value="">Select address</option>
-              {properties.map((property) => (
-                <option key={property.id} value={property.address}>
-                  {property.name} - {property.address}
-                </option>
+              {Object.keys(ADDRESSES).map((address) => (
+                <option key={address} value={address}>{address}</option>
               ))}
             </select>
             {errors.address && <p className="text-sm text-red-600">{errors.address}</p>}
