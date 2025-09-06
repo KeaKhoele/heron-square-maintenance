@@ -47,17 +47,45 @@ export function useAccessControl() {
 }
 
 // Crew members configuration
-const CREW_MEMBERS: CrewMember[] = [
-  {
-    email: 'kea.khoele@gmail.com',
-    accessLevel: AccessLevel.PRIMARY_CREW,
-    name: 'Kea Khoele',
-    addedBy: 'system',
-    addedDate: '2024-08-17T18:00:00.000Z' // Fixed date instead of new Date()
+// Crew members storage key
+const CREW_MEMBERS_STORAGE_KEY = 'heronSquareCrewMembers';
+
+// Load crew members from localStorage or use default
+const loadCrewMembers = (): CrewMember[] => {
+  try {
+    const stored = localStorage.getItem(CREW_MEMBERS_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      console.log('Loaded crew members from localStorage:', parsed);
+      return parsed;
+    }
+  } catch (error) {
+    console.error('Error loading crew members from localStorage:', error);
   }
-  // Add your UCT email here when you provide it
-  // More crew members will be added dynamically
-];
+  
+  // Return default crew members if no stored data
+  return [
+    {
+      email: 'kea.khoele@gmail.com',
+      accessLevel: AccessLevel.PRIMARY_CREW,
+      name: 'Kea Khoele',
+      addedBy: 'system',
+      addedDate: '2024-08-17T18:00:00.000Z'
+    }
+  ];
+};
+
+// Save crew members to localStorage
+const saveCrewMembers = (crewMembers: CrewMember[]): void => {
+  try {
+    localStorage.setItem(CREW_MEMBERS_STORAGE_KEY, JSON.stringify(crewMembers));
+    console.log('Saved crew members to localStorage:', crewMembers);
+  } catch (error) {
+    console.error('Error saving crew members to localStorage:', error);
+  }
+};
+
+const CREW_MEMBERS: CrewMember[] = loadCrewMembers();
 
 interface AccessControlProviderProps {
   children: ReactNode;
@@ -197,6 +225,9 @@ export function AccessControlProvider({ children }: AccessControlProviderProps) 
 
     CREW_MEMBERS.push(newMember);
     
+    // Save to localStorage for persistence
+    saveCrewMembers(CREW_MEMBERS);
+    
     // In production, this would save to Firebase/Google Sheets
     console.log('Crew member added:', newMember);
   };
@@ -222,6 +253,9 @@ export function AccessControlProvider({ children }: AccessControlProviderProps) 
     }
 
     CREW_MEMBERS.splice(memberIndex, 1);
+    
+    // Save to localStorage for persistence
+    saveCrewMembers(CREW_MEMBERS);
     
     // In production, this would save to Firebase/Google Sheets
     console.log('Crew member removed:', member);
