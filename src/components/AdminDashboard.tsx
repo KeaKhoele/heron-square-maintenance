@@ -191,7 +191,7 @@ const AdminDashboard: React.FC = () => {
       setNewCrewName('');
       setNewCrewAccessLevel(AccessLevel.SECONDARY_CREW);
       setShowAddCrew(false);
-      showSuccess('Crew member added successfully!');
+      showSuccess('Success', 'Crew member added successfully!');
       // Force re-render by updating a dummy state
       setIssues([...issues]);
     } catch (error: any) {
@@ -203,7 +203,7 @@ const AdminDashboard: React.FC = () => {
     if (window.confirm(`Are you sure you want to remove ${email}?`)) {
       try {
         await removeCrewMember(email);
-        showSuccess('Crew member removed successfully!');
+        showSuccess('Success', 'Crew member removed successfully!');
         // Force re-render by updating a dummy state
         setIssues([...issues]);
       } catch (error: any) {
