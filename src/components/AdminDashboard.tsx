@@ -180,15 +180,22 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleAddCrewMember = async () => {
+    if (!newCrewEmail.trim()) {
+      showError('Please enter a valid email address');
+      return;
+    }
+
     try {
       await addCrewMember(newCrewEmail, newCrewAccessLevel, newCrewName);
       setNewCrewEmail('');
       setNewCrewName('');
       setNewCrewAccessLevel(AccessLevel.SECONDARY_CREW);
       setShowAddCrew(false);
-      // Refresh crew list
+      showSuccess('Crew member added successfully!');
+      // Force re-render by updating a dummy state
+      setIssues([...issues]);
     } catch (error: any) {
-      alert(error.message);
+      showError(error.message);
     }
   };
 
@@ -196,9 +203,11 @@ const AdminDashboard: React.FC = () => {
     if (window.confirm(`Are you sure you want to remove ${email}?`)) {
       try {
         await removeCrewMember(email);
-        // Refresh crew list
+        showSuccess('Crew member removed successfully!');
+        // Force re-render by updating a dummy state
+        setIssues([...issues]);
       } catch (error: any) {
-        alert(`Cannot remove crew member: ${error.message}`);
+        showError(`Cannot remove crew member: ${error.message}`);
       }
     }
   };
@@ -309,12 +318,12 @@ const AdminDashboard: React.FC = () => {
         {/* Crew Management Panel */}
         {showCrewManagement && (
           <div className="bg-white shadow rounded-lg mb-8">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex justify-between items-center">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-2 sm:space-y-0">
                 <h2 className="text-lg font-medium text-gray-900">Crew Management</h2>
                 <button
                   onClick={() => setShowAddCrew(true)}
-                  className="flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
+                  className="flex items-center justify-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 w-full sm:w-auto"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Add Crew Member
@@ -322,14 +331,14 @@ const AdminDashboard: React.FC = () => {
               </div>
             </div>
             
-            <div className="px-6 py-4">
-              <div className="space-y-4">
+            <div className="px-4 sm:px-6 py-4">
+              <div className="space-y-3">
                 {getCrewMembers().map((member) => (
-                  <div key={member.email} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
+                  <div key={member.email} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 bg-gray-50 rounded-lg space-y-2 sm:space-y-0">
+                    <div className="flex-1">
                       <p className="font-medium text-gray-900">{member.name || member.email}</p>
                       <p className="text-sm text-gray-600">{member.email}</p>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
                         member.accessLevel === AccessLevel.PRIMARY_CREW 
                           ? 'bg-blue-100 text-blue-800' 
                           : 'bg-green-100 text-green-800'
@@ -339,7 +348,8 @@ const AdminDashboard: React.FC = () => {
                     </div>
                     <button
                       onClick={() => handleRemoveCrewMember(member.email)}
-                      className="text-red-600 hover:text-red-800"
+                      className="text-red-600 hover:text-red-800 p-2 -m-2 self-end sm:self-auto"
+                      aria-label={`Remove ${member.email}`}
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -353,7 +363,7 @@ const AdminDashboard: React.FC = () => {
         {/* Add Crew Member Modal */}
         {showAddCrew && (
           <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="relative top-4 sm:top-20 mx-auto p-5 border w-11/12 sm:w-96 max-w-md shadow-lg rounded-md bg-white">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Add Crew Member</h3>
                 <button onClick={() => setShowAddCrew(false)} className="text-gray-400 hover:text-gray-600">
@@ -368,8 +378,9 @@ const AdminDashboard: React.FC = () => {
                     type="email"
                     value={newCrewEmail}
                     onChange={(e) => setNewCrewEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="crew@example.com"
+                    required
                   />
                 </div>
                 
@@ -379,7 +390,7 @@ const AdminDashboard: React.FC = () => {
                     type="text"
                     value={newCrewName}
                     onChange={(e) => setNewCrewName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="John Doe"
                   />
                 </div>
@@ -389,7 +400,7 @@ const AdminDashboard: React.FC = () => {
                   <select
                     value={newCrewAccessLevel}
                     onChange={(e) => setNewCrewAccessLevel(e.target.value as AccessLevel)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value={AccessLevel.SECONDARY_CREW}>Secondary Crew</option>
                     {canManageUsers && (
