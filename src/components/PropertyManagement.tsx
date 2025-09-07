@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, Plus, Trash2, AlertCircle, X } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
+import { useNotifications } from '../contexts/NotificationContext';
 
 interface PropertyManagementProps {
   onClose: () => void;
 }
 
 const PropertyManagement: React.FC<PropertyManagementProps> = ({ onClose }) => {
+  const { showSuccess, showError } = useNotifications();
   const [properties, setProperties] = useState<Array<{id: string, address: string, units: number}>>([]);
   const [showAddProperty, setShowAddProperty] = useState(false);
   const [showRemoveProperty, setShowRemoveProperty] = useState(false);
@@ -30,8 +32,13 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({ onClose }) => {
   };
 
   const handleAddProperty = () => {
-    if (!newProperty.address || newProperty.units < 1) {
-      alert('Please fill in address and ensure units is at least 1');
+    if (!newProperty.address.trim()) {
+      showError('Validation Error', 'Please enter a property address');
+      return;
+    }
+    
+    if (newProperty.units < 1) {
+      showError('Validation Error', 'Number of units must be at least 1');
       return;
     }
 
@@ -46,8 +53,9 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({ onClose }) => {
       setNewProperty({ address: '', units: 1 });
       setShowAddProperty(false);
       loadProperties();
+      showSuccess('Success', 'Property added successfully!');
     } catch (error) {
-      alert(`Error adding property: ${error}`);
+      showError('Add Property Failed', `Error adding property: ${error}`);
     }
   };
 
@@ -60,23 +68,24 @@ const PropertyManagement: React.FC<PropertyManagementProps> = ({ onClose }) => {
         setPropertyToRemove('');
         setShowRemoveProperty(false);
         loadProperties();
+        showSuccess('Success', 'Property removed successfully!');
       } else {
-        alert('Failed to remove property');
+        showError('Remove Property Failed', 'Failed to remove property');
       }
     } catch (error) {
-      alert(`Error removing property: ${error}`);
+      showError('Remove Property Failed', `Error removing property: ${error}`);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b">
           <div className="flex items-center">
             <Building2 className="h-6 w-6 text-green-600 mr-3" />
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Property Management</h2>
-              <p className="text-sm text-gray-600">Manage properties available in issue submission forms</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Property Management</h2>
+              <p className="text-xs sm:text-sm text-gray-600">Manage properties available in issue submission forms</p>
             </div>
           </div>
           <button

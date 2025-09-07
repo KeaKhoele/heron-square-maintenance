@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Trash2, X } from 'lucide-react';
 import { propertyService } from '../services/propertyService';
+import { useNotifications } from '../contexts/NotificationContext';
 
 interface TenantManagementProps {
   onClose: () => void;
 }
 
 const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
+  const { showSuccess, showError } = useNotifications();
   const [tenants, setTenants] = useState<Array<{id: string, email: string, name: string}>>([]);
   const [showAddTenant, setShowAddTenant] = useState(false);
 
@@ -26,8 +28,20 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
   };
 
   const handleAddTenant = () => {
-    if (!newTenant.name || !newTenant.email) {
-      alert('Please fill in all fields');
+    if (!newTenant.name.trim()) {
+      showError('Validation Error', 'Please enter a tenant name');
+      return;
+    }
+    
+    if (!newTenant.email.trim()) {
+      showError('Validation Error', 'Please enter a tenant email');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newTenant.email)) {
+      showError('Validation Error', 'Please enter a valid email address');
       return;
     }
 
@@ -43,35 +57,40 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
       setNewTenant({ name: '', email: '' });
       setShowAddTenant(false);
       loadTenants();
+      showSuccess('Success', 'Tenant added successfully!');
     } catch (error) {
-      alert(`Error adding tenant: ${error}`);
+      showError('Add Tenant Failed', `Error adding tenant: ${error}`);
     }
   };
 
   const handleRemoveTenant = (tenantId: string) => {
-    if (window.confirm('Are you sure you want to remove this tenant?')) {
-      try {
-        const success = propertyService.removeTenant(tenantId);
-        if (success) {
-          loadTenants();
-        } else {
-          alert('Failed to remove tenant');
-        }
-      } catch (error) {
-        alert(`Error removing tenant: ${error}`);
+    // For now, we'll use a simple confirmation approach
+    // In a production app, you might want to implement a custom confirmation modal
+    const confirmed = window.confirm('Are you sure you want to remove this tenant?');
+    if (!confirmed) return;
+    
+    try {
+      const success = propertyService.removeTenant(tenantId);
+      if (success) {
+        loadTenants();
+        showSuccess('Success', 'Tenant removed successfully!');
+      } else {
+        showError('Remove Tenant Failed', 'Failed to remove tenant');
       }
+    } catch (error) {
+      showError('Remove Tenant Failed', `Error removing tenant: ${error}`);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b">
           <div className="flex items-center">
             <Users className="h-6 w-6 text-blue-600 mr-3" />
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Tenant Management</h2>
-              <p className="text-sm text-gray-600">Manage tenant email access to the app</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Tenant Management</h2>
+              <p className="text-xs sm:text-sm text-gray-600">Manage tenant email access to the app</p>
             </div>
           </div>
           <button
