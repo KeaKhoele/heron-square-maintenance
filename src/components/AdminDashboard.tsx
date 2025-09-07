@@ -181,7 +181,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleAddCrewMember = async () => {
     if (!newCrewEmail.trim()) {
-      showError('Please enter a valid email address');
+      showError('Validation Error', 'Please enter a valid email address');
       return;
     }
 
@@ -195,7 +195,7 @@ const AdminDashboard: React.FC = () => {
       // Force re-render by updating a dummy state
       setIssues([...issues]);
     } catch (error: any) {
-      showError(error.message);
+      showError('Add Crew Member Failed', error.message);
     }
   };
 
@@ -207,7 +207,7 @@ const AdminDashboard: React.FC = () => {
         // Force re-render by updating a dummy state
         setIssues([...issues]);
       } catch (error: any) {
-        showError(`Cannot remove crew member: ${error.message}`);
+        showError('Remove Crew Member Failed', `Cannot remove crew member: ${error.message}`);
       }
     }
   };
