@@ -263,7 +263,15 @@ export class GoogleSheetsService {
     const now = new Date();
     // Cape Town is UTC+2 (SAST - South African Standard Time)
     const capeTownTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
-    return capeTownTime.toISOString().replace('Z', '+02:00');
+    
+    // Format: "2025 - 09 - 08: 20:40"
+    const year = capeTownTime.getFullYear();
+    const month = String(capeTownTime.getMonth() + 1).padStart(2, '0');
+    const date = String(capeTownTime.getDate()).padStart(2, '0');
+    const hours = String(capeTownTime.getHours()).padStart(2, '0');
+    const minutes = String(capeTownTime.getMinutes()).padStart(2, '0');
+    
+    return `${year} - ${month} - ${date}: ${hours}:${minutes}`;
   }
   async submitIssue(issueData: Omit<Issue, 'id' | 'timestamp' | 'status'>): Promise<Issue> {
     try {
