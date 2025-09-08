@@ -314,7 +314,13 @@ export class GoogleSheetsService {
       // Try to add to Google Sheets using service account
       if (SPREADSHEET_ID && SERVICE_ACCOUNT_EMAIL && SERVICE_ACCOUNT_PRIVATE_KEY) {
         try {
+          console.log('Attempting to submit to Google Sheets...');
           const accessToken = await this.getAccessToken();
+          console.log('Access token obtained:', accessToken ? 'Yes' : 'No');
+          
+          const timestampForSheets = this.getCapeTownTimestampForSheets();
+          console.log('Timestamp for sheets:', timestampForSheets);
+          
           const rowData = [
             newIssue.id, // Issue ID (first column)
             newIssue.category, // Issue Category
@@ -325,9 +331,11 @@ export class GoogleSheetsService {
             newIssue.name, // Tenant Name
             newIssue.urgency, // Urgency
             newIssue.status, // Status
-            this.getCapeTownTimestampForSheets(), // Date and Time (custom format for Google Sheets)
+            timestampForSheets, // Date and Time (custom format for Google Sheets)
             newIssue.userEmail // User Email
           ];
+
+          console.log('Row data to submit:', rowData);
 
           const response = await fetch(
             `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
@@ -343,18 +351,39 @@ export class GoogleSheetsService {
             }
           );
 
+          console.log('Google Sheets response status:', response.status);
+
           if (response.ok) {
-            console.log('Successfully added issue to Google Sheets');
+            const responseData = await response.json();
+            console.log('Successfully added issue to Google Sheets:', responseData);
             // Update cache
             this.cache.push(newIssue);
             this.lastFetch = Date.now();
           } else {
             const errorText = await response.text();
             console.error('Google Sheets append error:', response.status, errorText);
+            // Try to parse error details
+            try {
+              const errorData = JSON.parse(errorText);
+              console.error('Parsed error details:', errorData);
+            } catch (parseError) {
+              console.error('Could not parse error response');
+            }
           }
         } catch (error) {
           console.error('Google Sheets service account error:', error);
+          console.error('Error details:', {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          });
         }
+      } else {
+        console.warn('Google Sheets credentials not configured:', {
+          SPREADSHEET_ID: !!SPREADSHEET_ID,
+          SERVICE_ACCOUNT_EMAIL: !!SERVICE_ACCOUNT_EMAIL,
+          SERVICE_ACCOUNT_PRIVATE_KEY: !!SERVICE_ACCOUNT_PRIVATE_KEY
+        });
       }
 
       // Trigger update event
