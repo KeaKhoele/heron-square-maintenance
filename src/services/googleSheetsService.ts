@@ -355,6 +355,14 @@ export class GoogleSheetsService {
       if (SPREADSHEET_ID && SERVICE_ACCOUNT_EMAIL && SERVICE_ACCOUNT_PRIVATE_KEY) {
         try {
           console.log('Attempting to submit to Google Sheets...');
+          
+          // Check if we're rate limited
+          if (this.isCurrentlyRateLimited()) {
+            console.log('Rate limited, will retry submission later');
+            // Store in localStorage and return - the issue is still saved
+            return newIssue;
+          }
+          
           const accessToken = await this.getAccessToken();
           console.log('Access token obtained:', accessToken ? 'Yes' : 'No');
           
@@ -388,7 +396,7 @@ export class GoogleSheetsService {
             }
           );
 
-          let insertRow = 2; // Default to row 2 (after header)
+          let insertRow = 3; // Default to row 3 (after "Heron Square Maintenance Report" and headers)
           
           if (getResponse.ok) {
             const getData = await getResponse.json();
@@ -433,14 +441,20 @@ export class GoogleSheetsService {
             this.cache.push(newIssue);
             this.lastFetch = Date.now();
           } else {
-            const errorText = await response.text();
-            console.error('Google Sheets append error:', response.status, errorText);
-            // Try to parse error details
-            try {
-              const errorData = JSON.parse(errorText);
-              console.error('Parsed error details:', errorData);
-            } catch (parseError) {
-              console.error('Could not parse error response');
+            // Handle rate limiting
+            if (response.status === 429) {
+              this.setRateLimit(60);
+              console.log('Rate limited during submission, issue saved locally');
+            } else {
+              const errorText = await response.text();
+              console.error('Google Sheets append error:', response.status, errorText);
+              // Try to parse error details
+              try {
+                const errorData = JSON.parse(errorText);
+                console.error('Parsed error details:', errorData);
+              } catch (parseError) {
+                console.error('Could not parse error response');
+              }
             }
           }
         } catch (error: any) {
@@ -573,6 +587,19 @@ export class GoogleSheetsService {
     this.lastFetch = 0;
   }
 
+  // Clear localStorage cache (for when spreadsheet is manually cleared)
+  clearLocalStorageCache(): void {
+    localStorage.removeItem('maintenanceIssues');
+    console.log('Cleared localStorage cache');
+  }
+
+  // Clear all caches (both memory and localStorage)
+  clearAllCaches(): void {
+    this.clearCache();
+    this.clearLocalStorageCache();
+    console.log('Cleared all caches');
+  }
+
   // Local storage methods (fallback)
   private storeInLocalStorage(issue: Issue): void {
     const storedIssues = this.getFromLocalStorage();
@@ -593,3 +620,12 @@ export class GoogleSheetsService {
 
 // Export singleton instance
 export const googleSheetsService = GoogleSheetsService.getInstance();
+
+// Export utility functions for cache management
+export const clearAllCaches = () => {
+  googleSheetsService.clearAllCaches();
+};
+
+export const clearLocalStorageCache = () => {
+  googleSheetsService.clearLocalStorageCache();
+};
