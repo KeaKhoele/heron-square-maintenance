@@ -370,12 +370,12 @@ export class GoogleSheetsService {
               console.error('Could not parse error response');
             }
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Google Sheets service account error:', error);
           console.error('Error details:', {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
+            message: error?.message || 'Unknown error',
+            stack: error?.stack || 'No stack trace',
+            name: error?.name || 'Unknown error type'
           });
         }
       } else {
