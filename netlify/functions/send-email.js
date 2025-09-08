@@ -1,7 +1,5 @@
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 exports.handler = async (event, context) => {
   // Handle CORS preflight request
   if (event.httpMethod === 'OPTIONS') {
@@ -28,6 +26,23 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Check if Resend API key is configured
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      console.error('RESEND_API_KEY environment variable is not configured');
+      return {
+        statusCode: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({ 
+          error: 'Email service not configured', 
+          details: 'RESEND_API_KEY environment variable is missing' 
+        }),
+      };
+    }
+
+    const resend = new Resend(resendApiKey);
     const { emailData } = JSON.parse(event.body);
     
     if (!emailData) {
@@ -42,8 +57,21 @@ exports.handler = async (event, context) => {
 
     const { to, subject, html } = emailData;
 
+    // Validate required fields
+    if (!to || !subject || !html) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({ error: 'Missing required fields: to, subject, or html' }),
+      };
+    }
+
+    const fromEmail = process.env.FROM_EMAIL || 'enquiries@heronsquare.co.za';
+
     const { data, error } = await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'enquiries@heronsquare.co.za',
+      from: fromEmail,
       to: to,
       subject: subject,
       html: html,
@@ -60,6 +88,7 @@ exports.handler = async (event, context) => {
       };
     }
 
+    console.log('Email sent successfully:', data);
     return {
       statusCode: 200,
       headers: {

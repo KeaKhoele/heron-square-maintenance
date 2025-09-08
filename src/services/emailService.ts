@@ -16,6 +16,12 @@ export class EmailService {
   // Send notification to maintenance crew when new issue is submitted
   async sendMaintenanceNotification(issue: Issue): Promise<void> {
     try {
+      // Check if email service is configured
+      if (!this.RESEND_API_KEY) {
+        console.warn('Email service not configured (RESEND_API_KEY missing), skipping notification');
+        return;
+      }
+
       // Get admin emails from Google Sheets (you'll need to implement this)
       const adminEmails = await this.getAdminEmails();
       
@@ -53,6 +59,12 @@ export class EmailService {
   // Send notification to admins (kea.khoele@gmail.com and enquiries@heronsquare.co.za)
   async sendAdminNotification(issue: Issue): Promise<void> {
     try {
+      // Check if email service is configured
+      if (!this.RESEND_API_KEY) {
+        console.warn('Email service not configured (RESEND_API_KEY missing), skipping admin notification');
+        return;
+      }
+
       const adminEmails = ['kea.khoele@gmail.com', 'enquiries@heronsquare.co.za'];
 
       const emailData = {
