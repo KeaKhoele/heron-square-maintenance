@@ -337,10 +337,43 @@ export class GoogleSheetsService {
 
           console.log('Row data to submit:', rowData);
 
-          const response = await fetch(
-            `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+          // First, get the current data to find the last row with issues
+          const getResponse = await fetch(
+            `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A:A?valueRenderOption=UNFORMATTED_VALUE`,
             {
-              method: 'POST',
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`
+              }
+            }
+          );
+
+          let insertRow = 2; // Default to row 2 (after header)
+          
+          if (getResponse.ok) {
+            const getData = await getResponse.json();
+            const values = getData.values || [];
+            
+            // Find the last row with actual data (not empty, not pivot table)
+            for (let i = values.length - 1; i >= 0; i--) {
+              if (values[i] && values[i][0] && values[i][0].toString().trim() !== '') {
+                // Check if this looks like an issue ID (starts with numbers)
+                const cellValue = values[i][0].toString();
+                if (/^\d+/.test(cellValue)) {
+                  insertRow = i + 2; // Insert after this row
+                  break;
+                }
+              }
+            }
+          }
+
+          console.log('Inserting new issue at row:', insertRow);
+
+          // Insert the new row at the correct position
+          const response = await fetch(
+            `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A${insertRow}:K${insertRow}?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+            {
+              method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${accessToken}`
