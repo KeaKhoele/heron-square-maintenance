@@ -17,9 +17,11 @@ export class GoogleSheetsService {
   private static instance: GoogleSheetsService;
   private cache: Issue[] = [];
   private lastFetch: number = 0;
-  private readonly CACHE_DURATION = 30000; // 30 seconds
+  private readonly CACHE_DURATION = 120000; // 2 minutes (increased from 30 seconds)
   private accessToken: string | null = null;
   private tokenExpiry: number = 0;
+  private isRateLimited: boolean = false;
+  private rateLimitUntil: number = 0;
 
   static getInstance(): GoogleSheetsService {
     if (!GoogleSheetsService.instance) {
@@ -148,9 +150,39 @@ export class GoogleSheetsService {
     }
   }
 
+  // Check if we're currently rate limited
+  private isCurrentlyRateLimited(): boolean {
+    if (this.isRateLimited && Date.now() < this.rateLimitUntil) {
+      return true;
+    }
+    // Reset rate limit flag if time has passed
+    if (this.isRateLimited && Date.now() >= this.rateLimitUntil) {
+      this.isRateLimited = false;
+      this.rateLimitUntil = 0;
+    }
+    return false;
+  }
+
+  // Set rate limit flag with backoff time
+  private setRateLimit(backoffSeconds: number = 60): void {
+    this.isRateLimited = true;
+    this.rateLimitUntil = Date.now() + (backoffSeconds * 1000);
+    console.log(`Rate limited until: ${new Date(this.rateLimitUntil).toLocaleTimeString()}`);
+  }
+
   // Fetch all issues from Google Sheets
   async fetchAllIssues(): Promise<Issue[]> {
     try {
+      // Check if we're rate limited
+      if (this.isCurrentlyRateLimited()) {
+        console.log('Currently rate limited, using cached data');
+        const localIssues = this.getFromLocalStorage();
+        if (localIssues.length > 0) {
+          console.log(`Using ${localIssues.length} issues from localStorage due to rate limit`);
+        }
+        return localIssues;
+      }
+
       // Check cache first
       if (this.cache.length > 0 && Date.now() - this.lastFetch < this.CACHE_DURATION) {
         return this.cache;
@@ -177,6 +209,14 @@ export class GoogleSheetsService {
       );
 
       if (!response.ok) {
+        // Handle rate limiting specifically
+        if (response.status === 429) {
+          this.setRateLimit(60); // 1 minute backoff
+          const localIssues = this.getFromLocalStorage();
+          console.log(`Rate limited (429), using ${localIssues.length} issues from localStorage`);
+          return localIssues;
+        }
+        
         const errorText = await response.text();
         throw handleError(
           new Error(`Google Sheets API error: ${response.status} - ${errorText}`),

@@ -49,17 +49,29 @@ const AdminDashboard: React.FC = () => {
   const [showCrewIssueForm, setShowCrewIssueForm] = useState(false);
   const [newCrewEmail, setNewCrewEmail] = useState('');
   const [newCrewName, setNewCrewName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const loadIssues = useCallback(async () => {
-    const fetchedIssues = await handleAsyncError(
-      () => getAllIssues(),
-      'loadIssues'
-    );
-    
-    if (fetchedIssues) {
-      setIssues(fetchedIssues);
+    // Prevent multiple simultaneous calls
+    if (isLoading) {
+      console.log('Already loading issues, skipping...');
+      return;
     }
-  }, [handleAsyncError]);
+    
+    setIsLoading(true);
+    try {
+      const fetchedIssues = await handleAsyncError(
+        () => getAllIssues(),
+        'loadIssues'
+      );
+      
+      if (fetchedIssues) {
+        setIssues(fetchedIssues);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [handleAsyncError, isLoading]);
 
   useEffect(() => {
     loadIssues();

@@ -235,14 +235,21 @@ export const retryWithBackoff = async <T>(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await fn();
-    } catch (error) {
+    } catch (error: any) {
       lastError = error;
+      
+      // Don't retry on 429 (rate limit) errors
+      if (error?.message?.includes('429') || error?.status === 429) {
+        console.log('Rate limit detected, not retrying');
+        break;
+      }
       
       if (attempt === maxRetries) {
         break;
       }
 
       const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms`);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
