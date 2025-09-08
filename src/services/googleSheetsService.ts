@@ -419,7 +419,7 @@ export class GoogleSheetsService {
 
           // Insert the new row at the correct position
           const response = await fetch(
-            `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A${insertRow}:K${insertRow}?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+            `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A${insertRow}:K${insertRow}?valueInputOption=RAW`,
             {
               method: 'PUT',
               headers: {

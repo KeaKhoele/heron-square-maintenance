@@ -96,6 +96,9 @@ const AdminDashboard: React.FC = () => {
           console.log('Adding new issue to local state');
           return [...prev, issue];
         });
+        
+        // Don't refresh from server for new issues to prevent overriding
+        return;
       } else {
         // For other updates, refresh from server
         loadIssues();
