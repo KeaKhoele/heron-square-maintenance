@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAccessControl, AccessLevel } from '../contexts/AccessControlContext';
 import {
@@ -50,16 +50,16 @@ const AdminDashboard: React.FC = () => {
   const [showCrewIssueForm, setShowCrewIssueForm] = useState(false);
   const [newCrewEmail, setNewCrewEmail] = useState('');
   const [newCrewName, setNewCrewName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const isLoadingRef = useRef(false);
 
   const loadIssues = useCallback(async () => {
     // Prevent multiple simultaneous calls
-    if (isLoading) {
+    if (isLoadingRef.current) {
       console.log('Already loading issues, skipping...');
       return;
     }
     
-    setIsLoading(true);
+    isLoadingRef.current = true;
     try {
       const fetchedIssues = await handleAsyncError(
         () => getAllIssues(),
@@ -69,10 +69,12 @@ const AdminDashboard: React.FC = () => {
       if (fetchedIssues) {
         setIssues(fetchedIssues);
       }
+    } catch (error) {
+      console.error('Error loading issues:', error);
     } finally {
-      setIsLoading(false);
+      isLoadingRef.current = false;
     }
-  }, [handleAsyncError, isLoading]);
+  }, [handleAsyncError]);
 
   useEffect(() => {
     loadIssues();
