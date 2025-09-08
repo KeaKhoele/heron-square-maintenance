@@ -208,7 +208,7 @@ export class GoogleSheetsService {
             // New format: Issue ID in column A
             return {
               id: row[0] || this.generateUniqueId(), // Issue ID column
-              timestamp: row[9] || this.getCapeTownTimestamp(), // Date and Time column
+              timestamp: this.convertCustomFormatToISO(row[9] || this.getCapeTownTimestampForSheets()), // Date and Time column
               name: row[6] || '', // Tenant Name column
               address: row[4] || '', // Property Address column
               unit: row[5] || '', // Unit Number column
@@ -223,7 +223,7 @@ export class GoogleSheetsService {
             // Old format: No Issue ID column, generate one
             return {
               id: this.generateUniqueId(), // Generate unique ID
-              timestamp: row[8] || this.getCapeTownTimestamp(), // Date and Time column
+              timestamp: this.convertCustomFormatToISO(row[8] || this.getCapeTownTimestampForSheets()), // Date and Time column
               name: row[5] || '', // Tenant Name column
               address: row[3] || '', // Property Address column
               unit: row[4] || '', // Unit Number column
@@ -258,8 +258,8 @@ export class GoogleSheetsService {
     return Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9) + '-' + Math.random().toString(36).substr(2, 9);
   }
 
-  // Helper function to get Cape Town timezone timestamp
-  private getCapeTownTimestamp(): string {
+  // Helper function to get Cape Town timezone timestamp for Google Sheets
+  private getCapeTownTimestampForSheets(): string {
     const now = new Date();
     // Cape Town is UTC+2 (SAST - South African Standard Time)
     const capeTownTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
@@ -272,6 +272,32 @@ export class GoogleSheetsService {
     const minutes = String(capeTownTime.getMinutes()).padStart(2, '0');
     
     return `${year} - ${month} - ${date}: ${hours}:${minutes}`;
+  }
+
+  // Helper function to get Cape Town timezone timestamp for app (ISO format)
+  private getCapeTownTimestamp(): string {
+    const now = new Date();
+    // Cape Town is UTC+2 (SAST - South African Standard Time)
+    const capeTownTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
+    return capeTownTime.toISOString().replace('Z', '+02:00');
+  }
+
+  // Helper function to convert custom format back to ISO for parsing
+  private convertCustomFormatToISO(customTimestamp: string): string {
+    try {
+      // Parse format: "2025 - 09 - 08: 20:40"
+      const match = customTimestamp.match(/(\d{4}) - (\d{2}) - (\d{2}): (\d{2}):(\d{2})/);
+      if (match) {
+        const [, year, month, date, hours, minutes] = match;
+        // Create ISO string with Cape Town timezone
+        const isoString = `${year}-${month}-${date}T${hours}:${minutes}:00+02:00`;
+        return isoString;
+      }
+    } catch (error) {
+      console.error('Error converting custom timestamp:', error);
+    }
+    // Fallback to current time if parsing fails
+    return this.getCapeTownTimestamp();
   }
   async submitIssue(issueData: Omit<Issue, 'id' | 'timestamp' | 'status'>): Promise<Issue> {
     try {
@@ -299,7 +325,7 @@ export class GoogleSheetsService {
             newIssue.name, // Tenant Name
             newIssue.urgency, // Urgency
             newIssue.status, // Status
-            newIssue.timestamp, // Date and Time
+            this.getCapeTownTimestampForSheets(), // Date and Time (custom format for Google Sheets)
             newIssue.userEmail // User Email
           ];
 
