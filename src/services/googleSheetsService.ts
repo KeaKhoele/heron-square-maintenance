@@ -179,9 +179,11 @@ export class GoogleSheetsService {
         const localIssues = this.getFromLocalStorage();
         if (localIssues.length > 0) {
           console.log(`Using ${localIssues.length} issues from localStorage due to rate limit`);
-          // Update cache with localStorage data to prevent inconsistencies
-          this.cache = localIssues;
-          this.lastFetch = Date.now();
+          // Only update cache if it's empty or significantly different
+          if (this.cache.length === 0 || Math.abs(this.cache.length - localIssues.length) > 1) {
+            this.cache = localIssues;
+            this.lastFetch = Date.now();
+          }
         }
         return localIssues;
       }

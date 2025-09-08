@@ -107,8 +107,10 @@ const AdminDashboard: React.FC = () => {
           return [...prev, issue];
         });
         
-        // Don't refresh from server for new issues to prevent overriding
-        return;
+        // Still refresh from server to keep cache in sync, but with debouncing
+        setTimeout(() => {
+          loadIssues();
+        }, 500);
       } else {
         // For other updates, refresh from server
         loadIssues();
@@ -266,13 +268,9 @@ const AdminDashboard: React.FC = () => {
     setIssues([]); // Clear the local state
     showSuccess(
       'Cache Cleared',
-      'All cached data has been cleared. The app will now sync with Google Sheets.',
+      'All cached data has been cleared. Click Refresh to sync with Google Sheets.',
       3000
     );
-    // Force a fresh load after clearing cache
-    setTimeout(() => {
-      loadIssues();
-    }, 1000);
   };
 
   const filteredIssues = issues.filter(issue => 
