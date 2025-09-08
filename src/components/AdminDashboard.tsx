@@ -80,16 +80,33 @@ const AdminDashboard: React.FC = () => {
     loadIssues();
     
     // Listen for issue updates from other components
-    const handleIssueUpdate = () => {
+    const handleIssueUpdate = (event: CustomEvent) => {
       console.log('Issue update detected, refreshing issues...');
-      loadIssues();
+      const { action, issue } = event.detail || {};
+      
+      if (action === 'created' && issue) {
+        // For new issues, add to local state immediately
+        setIssues(prev => {
+          // Check if issue already exists to prevent duplicates
+          const exists = prev.some(existingIssue => existingIssue.id === issue.id);
+          if (exists) {
+            console.log('Issue already exists in state, skipping add');
+            return prev;
+          }
+          console.log('Adding new issue to local state');
+          return [...prev, issue];
+        });
+      } else {
+        // For other updates, refresh from server
+        loadIssues();
+      }
     };
     
-    window.addEventListener('issueUpdated', handleIssueUpdate);
+    window.addEventListener('issueUpdated', handleIssueUpdate as EventListener);
     
     // Cleanup listener on unmount
     return () => {
-      window.removeEventListener('issueUpdated', handleIssueUpdate);
+      window.removeEventListener('issueUpdated', handleIssueUpdate as EventListener);
     };
   }, [loadIssues]);
 
@@ -186,9 +203,8 @@ const AdminDashboard: React.FC = () => {
       await submitIssue(crewIssue);
       console.log('Crew issue submitted:', crewIssue);
       
-      // Close the form and refresh issues
+      // Close the form - the issue will be added via the event listener
       setShowCrewIssueForm(false);
-      loadIssues();
     } catch (error) {
       console.error('Error submitting crew issue:', error);
     }
