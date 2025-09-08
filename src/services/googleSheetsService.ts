@@ -179,6 +179,9 @@ export class GoogleSheetsService {
         const localIssues = this.getFromLocalStorage();
         if (localIssues.length > 0) {
           console.log(`Using ${localIssues.length} issues from localStorage due to rate limit`);
+          // Update cache with localStorage data to prevent inconsistencies
+          this.cache = localIssues;
+          this.lastFetch = Date.now();
         }
         return localIssues;
       }
@@ -597,7 +600,10 @@ export class GoogleSheetsService {
   clearAllCaches(): void {
     this.clearCache();
     this.clearLocalStorageCache();
-    console.log('Cleared all caches');
+    // Also clear rate limit to allow fresh API calls
+    this.isRateLimited = false;
+    this.rateLimitUntil = 0;
+    console.log('Cleared all caches and rate limit');
   }
 
   // Local storage methods (fallback)

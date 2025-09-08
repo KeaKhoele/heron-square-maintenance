@@ -51,6 +51,7 @@ const AdminDashboard: React.FC = () => {
   const [newCrewEmail, setNewCrewEmail] = useState('');
   const [newCrewName, setNewCrewName] = useState('');
   const isLoadingRef = useRef(false);
+  const lastLoadTimeRef = useRef(0);
 
   const loadIssues = useCallback(async () => {
     // Prevent multiple simultaneous calls
@@ -59,7 +60,16 @@ const AdminDashboard: React.FC = () => {
       return;
     }
     
+    // Debounce: Don't load more than once every 2 seconds
+    const now = Date.now();
+    if (now - lastLoadTimeRef.current < 2000) {
+      console.log('Debouncing loadIssues call');
+      return;
+    }
+    
     isLoadingRef.current = true;
+    lastLoadTimeRef.current = now;
+    
     try {
       const fetchedIssues = await handleAsyncError(
         () => getAllIssues(),
@@ -256,9 +266,13 @@ const AdminDashboard: React.FC = () => {
     setIssues([]); // Clear the local state
     showSuccess(
       'Cache Cleared',
-      'All cached data has been cleared. Refresh to sync with Google Sheets.',
+      'All cached data has been cleared. The app will now sync with Google Sheets.',
       3000
     );
+    // Force a fresh load after clearing cache
+    setTimeout(() => {
+      loadIssues();
+    }, 1000);
   };
 
   const filteredIssues = issues.filter(issue => 
