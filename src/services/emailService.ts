@@ -282,11 +282,9 @@ export class EmailService {
         date = new Date(timestamp);
         console.log('ISO date object:', date);
         
-        // Convert to Cape Town timezone
-        const capeTownTime = new Date(date.toLocaleString("en-US", {timeZone: "Africa/Johannesburg"}));
-        console.log('Cape Town time object:', capeTownTime);
-        
-        const formatted = capeTownTime.toLocaleString('en-ZA', {
+        // The ISO timestamp already includes timezone info (+02:00), so we can use it directly
+        // Format it for display without additional timezone conversion
+        const formatted = date.toLocaleString('en-ZA', {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit',
