@@ -256,12 +256,14 @@ export class EmailService {
   // Format timestamp for email display in Cape Town timezone
   private formatTimestampForEmail(timestamp: string): string {
     try {
+      console.log('Email timestamp input:', timestamp);
+      
       // Parse the timestamp (could be ISO format or custom format)
       let date: Date;
       
       if (timestamp.includes(' - ')) {
-        // Custom format from Google Sheets: "2025 - 09 - 09: 19:09"
-        // This timestamp is already in Cape Town time, so we just need to parse it correctly
+        // Custom format from Google Sheets: "2025 - 09 - 09: 19:17"
+        console.log('Using custom format parsing');
         const parts = timestamp.split(' - ');
         const year = parts[0];
         const month = parts[1];
@@ -270,16 +272,21 @@ export class EmailService {
         const time = dayTime[1];
         const [hours, minutes] = time.split(':');
         
-        // Create date object - the timestamp is already in Cape Town time
-        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
-        
         // Format directly without timezone conversion since it's already Cape Town time
-        return `${year}/${month}/${day}, ${hours}:${minutes}`;
+        const formatted = `${year}/${month}/${day}, ${hours}:${minutes}`;
+        console.log('Custom format result:', formatted);
+        return formatted;
       } else {
         // ISO format - convert to Cape Town timezone
+        console.log('Using ISO format parsing');
         date = new Date(timestamp);
-        return date.toLocaleString('en-ZA', {
-          timeZone: 'Africa/Johannesburg',
+        console.log('ISO date object:', date);
+        
+        // Convert to Cape Town timezone
+        const capeTownTime = new Date(date.toLocaleString("en-US", {timeZone: "Africa/Johannesburg"}));
+        console.log('Cape Town time object:', capeTownTime);
+        
+        const formatted = capeTownTime.toLocaleString('en-ZA', {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit',
@@ -287,6 +294,8 @@ export class EmailService {
           minute: '2-digit',
           hour12: false
         });
+        console.log('ISO format result:', formatted);
+        return formatted;
       }
     } catch (error) {
       console.error('Error formatting timestamp for email:', error);
