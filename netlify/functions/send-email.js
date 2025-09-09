@@ -73,7 +73,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const fromEmail = process.env.FROM_EMAIL || 'enquiries@heronsquare.co.za';
+    const fromEmail = process.env.FROM_EMAIL || 'onboarding@resend.dev';
     console.log('Sending email from:', fromEmail, 'to:', to);
 
     const { data, error } = await resend.emails.send({
@@ -84,7 +84,7 @@ exports.handler = async (event, context) => {
     });
 
     if (error) {
-      console.error('Resend API error:', error);
+      console.error('Resend API error:', JSON.stringify(error, null, 2));
       return {
         statusCode: 500,
         headers: {
