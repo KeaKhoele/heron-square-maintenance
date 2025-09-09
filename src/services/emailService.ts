@@ -71,7 +71,8 @@ export class EmailService {
 
       console.log('Email service configured, sending admin notification...');
       
-      const adminEmails = ['kea.khoele@gmail.com']; // Removed enquiries@heronsquare.co.za as requested
+      // Get all Primary Crew member emails (including newly added ones)
+      const adminEmails = this.getPrimaryCrewEmails();
 
       const emailData = {
         to: adminEmails,
@@ -253,12 +254,42 @@ export class EmailService {
 
   // Get admin emails from Google Sheets (placeholder - you'll need to implement this)
   private async getAdminEmails(): Promise<string[]> {
-    // This should fetch admin emails from a separate Google Sheet column
-    // For now, return a default list including crew members
-    return [
-      'maintenance@heronsquare.co.za',
-      'kea.khoele@gmail.com' // Primary crew member
-    ]; // Removed enquiries@heronsquare.co.za as requested
+    // Get all Primary Crew members from the access control context
+    // This will include both existing and newly added Primary Crew members
+    const primaryCrewEmails = this.getPrimaryCrewEmails();
+    
+    if (primaryCrewEmails.length === 0) {
+      // Fallback to your email if no Primary Crew members found
+      return ['kea.khoele@gmail.com'];
+    }
+    
+    return primaryCrewEmails;
+  }
+
+  // Get all Primary Crew member emails
+  private getPrimaryCrewEmails(): string[] {
+    try {
+      // Get crew members from localStorage (where they're stored by AccessControlContext)
+      const crewMembersData = localStorage.getItem('heron_square_crew_members');
+      if (!crewMembersData) {
+        return ['kea.khoele@gmail.com']; // Fallback to your email
+      }
+
+      const crewMembers = JSON.parse(crewMembersData);
+      const primaryCrewEmails = crewMembers
+        .filter((member: any) => member.accessLevel === 'primary_crew')
+        .map((member: any) => member.email);
+
+      // Always include your email as fallback
+      if (!primaryCrewEmails.includes('kea.khoele@gmail.com')) {
+        primaryCrewEmails.push('kea.khoele@gmail.com');
+      }
+
+      return primaryCrewEmails;
+    } catch (error) {
+      console.error('Error getting Primary Crew emails:', error);
+      return ['kea.khoele@gmail.com']; // Fallback to your email
+    }
   }
 
   // Get spreadsheet as attachment (placeholder - you'll need to implement this)
