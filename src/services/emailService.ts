@@ -125,7 +125,7 @@ export class EmailService {
             </div>
             <div class="detail-row">
               <span class="label">Submitted:</span>
-              <span class="value">${new Date(issue.timestamp).toLocaleString()}</span>
+              <span class="value">${this.formatTimestampForEmail(issue.timestamp)}</span>
             </div>
           </div>
           
@@ -197,7 +197,7 @@ export class EmailService {
             </div>
             <div class="detail-row">
               <span class="label">Submitted:</span>
-              <span class="value">${new Date(issue.timestamp).toLocaleString()}</span>
+              <span class="value">${this.formatTimestampForEmail(issue.timestamp)}</span>
             </div>
           </div>
           
@@ -250,6 +250,45 @@ export class EmailService {
     } catch (error) {
       console.error('Error getting Primary Crew emails:', error);
       return ['kea.khoele@gmail.com']; // Fallback to your email
+    }
+  }
+
+  // Format timestamp for email display in Cape Town timezone
+  private formatTimestampForEmail(timestamp: string): string {
+    try {
+      // Parse the timestamp (could be ISO format or custom format)
+      let date: Date;
+      
+      if (timestamp.includes(' - ')) {
+        // Custom format from Google Sheets: "2025 - 09 - 09: 18:53"
+        const parts = timestamp.split(' - ');
+        const year = parts[0];
+        const month = parts[1];
+        const dayTime = parts[2].split(': ');
+        const day = dayTime[0];
+        const time = dayTime[1];
+        const [hours, minutes] = time.split(':');
+        
+        // Create date in Cape Town timezone
+        date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+      } else {
+        // ISO format
+        date = new Date(timestamp);
+      }
+      
+      // Format for Cape Town timezone
+      return date.toLocaleString('en-ZA', {
+        timeZone: 'Africa/Johannesburg',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      console.error('Error formatting timestamp for email:', error);
+      return new Date().toLocaleString();
     }
   }
 
