@@ -18,10 +18,12 @@ export class EmailService {
     try {
       // Check if email service is configured
       if (!this.RESEND_API_KEY) {
-        console.warn('Email service not configured (RESEND_API_KEY missing), skipping notification');
+        console.warn('Email service not configured (REACT_APP_RESEND_API_KEY missing), skipping notification');
         return;
       }
 
+      console.log('Email service configured, sending maintenance notification...');
+      
       // Get admin emails from Google Sheets (you'll need to implement this)
       const adminEmails = await this.getAdminEmails();
       
@@ -35,6 +37,8 @@ export class EmailService {
         subject: 'New Maintenance Request Submitted',
         html: this.generateMaintenanceEmailHTML(issue)
       };
+
+      console.log('Sending email to:', adminEmails);
 
       const response = await fetch('/.netlify/functions/send-email', {
         method: 'POST',
@@ -61,10 +65,12 @@ export class EmailService {
     try {
       // Check if email service is configured
       if (!this.RESEND_API_KEY) {
-        console.warn('Email service not configured (RESEND_API_KEY missing), skipping admin notification');
+        console.warn('Email service not configured (REACT_APP_RESEND_API_KEY missing), skipping admin notification');
         return;
       }
 
+      console.log('Email service configured, sending admin notification...');
+      
       const adminEmails = ['kea.khoele@gmail.com', 'enquiries@heronsquare.co.za'];
 
       const emailData = {
@@ -72,6 +78,8 @@ export class EmailService {
         subject: 'New Maintenance Request - Admin Notification',
         html: this.generateAdminEmailHTML(issue)
       };
+
+      console.log('Sending admin email to:', adminEmails);
 
       const response = await fetch('/.netlify/functions/send-email', {
         method: 'POST',
