@@ -260,7 +260,8 @@ export class EmailService {
       let date: Date;
       
       if (timestamp.includes(' - ')) {
-        // Custom format from Google Sheets: "2025 - 09 - 09: 18:53"
+        // Custom format from Google Sheets: "2025 - 09 - 09: 19:09"
+        // This timestamp is already in Cape Town time, so we just need to parse it correctly
         const parts = timestamp.split(' - ');
         const year = parts[0];
         const month = parts[1];
@@ -269,23 +270,24 @@ export class EmailService {
         const time = dayTime[1];
         const [hours, minutes] = time.split(':');
         
-        // Create date in Cape Town timezone
+        // Create date object - the timestamp is already in Cape Town time
         date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+        
+        // Format directly without timezone conversion since it's already Cape Town time
+        return `${year}/${month}/${day}, ${hours}:${minutes}`;
       } else {
-        // ISO format
+        // ISO format - convert to Cape Town timezone
         date = new Date(timestamp);
+        return date.toLocaleString('en-ZA', {
+          timeZone: 'Africa/Johannesburg',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
       }
-      
-      // Format for Cape Town timezone
-      return date.toLocaleString('en-ZA', {
-        timeZone: 'Africa/Johannesburg',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      });
     } catch (error) {
       console.error('Error formatting timestamp for email:', error);
       return new Date().toLocaleString();
