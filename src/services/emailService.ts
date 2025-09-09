@@ -71,7 +71,7 @@ export class EmailService {
 
       console.log('Email service configured, sending admin notification...');
       
-      const adminEmails = ['kea.khoele@gmail.com', 'enquiries@heronsquare.co.za'];
+      const adminEmails = ['kea.khoele@gmail.com']; // Removed enquiries@heronsquare.co.za as requested
 
       const emailData = {
         to: adminEmails,
@@ -257,9 +257,8 @@ export class EmailService {
     // For now, return a default list including crew members
     return [
       'maintenance@heronsquare.co.za',
-      'kea.khoele@gmail.com', // Primary crew member
-      'enquiries@heronsquare.co.za' // Admin email
-    ]; // Replace with actual implementation
+      'kea.khoele@gmail.com' // Primary crew member
+    ]; // Removed enquiries@heronsquare.co.za as requested
   }
 
   // Get spreadsheet as attachment (placeholder - you'll need to implement this)
