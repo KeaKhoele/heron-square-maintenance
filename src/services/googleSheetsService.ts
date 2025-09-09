@@ -322,8 +322,8 @@ export class GoogleSheetsService {
   // Helper function to get Cape Town timezone timestamp for app (ISO format)
   private getCapeTownTimestamp(): string {
     const now = new Date();
-    // Use proper timezone conversion for Cape Town (Africa/Johannesburg)
-    const capeTownTime = new Date(now.toLocaleString("en-US", {timeZone: "Africa/Johannesburg"}));
+    // Cape Town is UTC+2, so add 2 hours to UTC time
+    const capeTownTime = new Date(now.getTime() + (2 * 60 * 60 * 1000));
     return capeTownTime.toISOString().replace('Z', '+02:00');
   }
 
