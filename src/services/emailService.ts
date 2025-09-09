@@ -63,44 +63,9 @@ export class EmailService {
 
   // Send notification to admins (kea.khoele@gmail.com and enquiries@heronsquare.co.za)
   async sendAdminNotification(issue: Issue): Promise<void> {
-    try {
-      // Check if email service is configured
-      if (!this.RESEND_API_KEY) {
-        console.warn('Email service not configured (REACT_APP_RESEND_API_KEY missing), skipping admin notification');
-        return;
-      }
-
-      console.log('Email service configured, sending admin notification...');
-      
-      // Get all Primary Crew member emails (including newly added ones)
-      const adminEmails = this.getPrimaryCrewEmails();
-
-      const emailData = {
-        to: adminEmails,
-        subject: 'New Maintenance Request - Admin Notification',
-        html: this.generateAdminEmailHTML(issue)
-      };
-
-      console.log('Sending admin email to:', adminEmails);
-
-      const response = await fetch('/.netlify/functions/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ emailData })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        console.error('Email service error details:', errorData);
-        throw new Error(`Email service error: ${response.status} ${errorData.error || response.statusText}`);
-      }
-
-      console.log('Admin notification sent successfully');
-    } catch (error) {
-      console.error('Error sending admin notification:', error);
-    }
+    // Admin notifications disabled - only sending maintenance notifications
+    console.log('Admin notifications disabled, skipping admin notification');
+    return;
   }
 
   // Generate HTML for maintenance crew email
@@ -139,10 +104,6 @@ export class EmailService {
               <span class="value">${issue.name}</span>
             </div>
             <div class="detail-row">
-              <span class="label">Contact Email:</span>
-              <span class="value">${issue.userEmail}</span>
-            </div>
-            <div class="detail-row">
               <span class="label">Unit & Address:</span>
               <span class="value">${issue.unit} ${issue.address}</span>
             </div>
@@ -168,7 +129,8 @@ export class EmailService {
             </div>
           </div>
           
-          <p>Please find the Heron Square maintenance issues spreadsheet attached below.</p>
+          <p>Please find the Heron Square maintenance issues spreadsheet below:</p>
+          <p><a href="https://docs.google.com/spreadsheets/d/1VRtCrrGDcDaFYr6DFlfiM8oz8h7wJbEzHjy1eJ2UOqA/edit" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">📊 View Maintenance Issues Spreadsheet</a></p>
           
           <div class="footer">
             <p>Kind Regards,<br>Heron Square</p>
@@ -214,10 +176,6 @@ export class EmailService {
               <span class="value">${issue.name}</span>
             </div>
             <div class="detail-row">
-              <span class="label">Contact Email:</span>
-              <span class="value">${issue.userEmail}</span>
-            </div>
-            <div class="detail-row">
               <span class="label">Unit & Address:</span>
               <span class="value">${issue.unit} ${issue.address}</span>
             </div>
@@ -243,7 +201,8 @@ export class EmailService {
             </div>
           </div>
           
-          <p>Please find the Heron Square maintenance issues spreadsheet attached below.</p>
+          <p>Please find the Heron Square maintenance issues spreadsheet below:</p>
+          <p><a href="https://docs.google.com/spreadsheets/d/1VRtCrrGDcDaFYr6DFlfiM8oz8h7wJbEzHjy1eJ2UOqA/edit" target="_blank" style="color: #007bff; text-decoration: none; font-weight: bold;">📊 View Maintenance Issues Spreadsheet</a></p>
           
           <div class="footer">
             <p>Kind Regards,<br>Heron Square</p>
