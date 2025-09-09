@@ -28,6 +28,8 @@ exports.handler = async (event, context) => {
   try {
     // Check if Resend API key is configured
     const resendApiKey = process.env.RESEND_API_KEY;
+    console.log('RESEND_API_KEY configured:', resendApiKey ? 'Yes' : 'No');
+    
     if (!resendApiKey) {
       console.error('RESEND_API_KEY environment variable is not configured');
       return {
@@ -45,6 +47,8 @@ exports.handler = async (event, context) => {
     const resend = new Resend(resendApiKey);
     const { emailData } = JSON.parse(event.body);
     
+    console.log('Email data received:', JSON.stringify(emailData, null, 2));
+    
     if (!emailData) {
       return {
         statusCode: 400,
@@ -59,6 +63,7 @@ exports.handler = async (event, context) => {
 
     // Validate required fields
     if (!to || !subject || !html) {
+      console.error('Missing required fields:', { to: !!to, subject: !!subject, html: !!html });
       return {
         statusCode: 400,
         headers: {
@@ -69,6 +74,7 @@ exports.handler = async (event, context) => {
     }
 
     const fromEmail = process.env.FROM_EMAIL || 'enquiries@heronsquare.co.za';
+    console.log('Sending email from:', fromEmail, 'to:', to);
 
     const { data, error } = await resend.emails.send({
       from: fromEmail,

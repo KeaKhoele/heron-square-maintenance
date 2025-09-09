@@ -49,7 +49,8 @@ export class EmailService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Email service error details:', errorData);
         throw new Error(`Email service error: ${response.status} ${errorData.error || response.statusText}`);
       }
 
@@ -91,7 +92,8 @@ export class EmailService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error('Email service error details:', errorData);
         throw new Error(`Email service error: ${response.status} ${errorData.error || response.statusText}`);
       }
 
