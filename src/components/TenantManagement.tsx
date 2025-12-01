@@ -15,25 +15,12 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
   // Add Tenant Form
   const [newTenant, setNewTenant] = useState({
     name: '',
-    email: '',
-    propertyId: '',
-    unit: ''
+    email: ''
   });
-  const [properties, setProperties] = useState<Array<{id: string, address: string, units: number}>>([]);
 
   useEffect(() => {
     loadTenants();
-    loadProperties();
   }, []);
-
-  const loadProperties = () => {
-    const allProperties = propertyService.getAllProperties();
-    setProperties(allProperties);
-    // Set default property if available
-    if (allProperties.length > 0 && !newTenant.propertyId) {
-      setNewTenant(prev => ({ ...prev, propertyId: allProperties[0].id }));
-    }
-  };
 
   const loadTenants = () => {
     const allTenants = propertyService.getAllTenants();
@@ -63,33 +50,23 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
       return;
     }
 
-    if (!newTenant.unit.trim()) {
-      showError('Validation Error', 'Please enter a unit number');
-      return;
-    }
-
     try {
+      // Use empty property/unit since tenants select these when submitting issues
       propertyService.addTenant(
         newTenant.email,
         newTenant.name,
-        newTenant.propertyId,
-        newTenant.unit,
+        '', // Property will be selected when tenant submits issues
+        '', // Unit will be selected when tenant submits issues
         'admin'
       );
       
-      setNewTenant({ name: '', email: '', propertyId: properties[0]?.id || '', unit: '' });
+      setNewTenant({ name: '', email: '' });
       setShowAddTenant(false);
       loadTenants();
       showSuccess('Success', 'Tenant added successfully!');
     } catch (error: any) {
       showError('Add Tenant Failed', error.message || `Error adding tenant: ${error}`);
     }
-  };
-
-  const generateUnits = (propertyId: string) => {
-    const property = properties.find(p => p.id === propertyId);
-    if (!property) return [];
-    return Array.from({ length: property.units }, (_, i) => `Unit ${i + 1}`);
   };
 
   const handleRemoveTenant = (tenantId: string) => {
@@ -195,43 +172,9 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="e.g., john@example.com"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Property *
-                  </label>
-                  <select
-                    value={newTenant.propertyId}
-                    onChange={(e) => {
-                      setNewTenant({ ...newTenant, propertyId: e.target.value, unit: '' });
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">Select property</option>
-                    {properties.map((property) => (
-                      <option key={property.id} value={property.id}>
-                        {property.address}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Unit Number *
-                  </label>
-                  <select
-                    value={newTenant.unit}
-                    onChange={(e) => setNewTenant({ ...newTenant, unit: e.target.value })}
-                    disabled={!newTenant.propertyId}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-                    required
-                  >
-                    <option value="">Select unit</option>
-                    {newTenant.propertyId && generateUnits(newTenant.propertyId).map((unit) => (
-                      <option key={unit} value={unit}>{unit}</option>
-                    ))}
-                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Tenants will select their property and unit when submitting issues
+                  </p>
                 </div>
               </div>
               <div className="flex justify-end gap-2 mt-6">

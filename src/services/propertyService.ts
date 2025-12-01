@@ -372,14 +372,16 @@ export class PropertyService {
       throw new Error('Tenant with this email already exists');
     }
 
-    // Check if unit is already occupied
-    const existingUnitTenant = this.tenants.find(t => 
-      t.propertyId === propertyId && 
-      t.unit === unit && 
-      t.status === 'active'
-    );
-    if (existingUnitTenant) {
-      throw new Error(`Unit ${unit} is already occupied by ${existingUnitTenant.name}`);
+    // Check if unit is already occupied (only if property and unit are provided)
+    if (propertyId && unit) {
+      const existingUnitTenant = this.tenants.find(t => 
+        t.propertyId === propertyId && 
+        t.unit === unit && 
+        t.status === 'active'
+      );
+      if (existingUnitTenant) {
+        throw new Error(`Unit ${unit} is already occupied by ${existingUnitTenant.name}`);
+      }
     }
 
     const newTenant: Tenant = {
