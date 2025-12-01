@@ -202,8 +202,8 @@ const AdminDashboard: React.FC = () => {
 
   const handleCrewIssueSubmit = async (data: any) => {
     try {
-      // Convert crew issue data to regular issue format
-      const crewIssue: Omit<Issue, 'id' | 'timestamp' | 'status'> = {
+      // Convert crew issue data to regular issue format (including imageFile)
+      const crewIssue: IssueFormData = {
         name: data.crewName,
         address: data.address,
         unit: data.unit,
@@ -211,7 +211,8 @@ const AdminDashboard: React.FC = () => {
         issueType: data.issueType,
         description: data.description,
         urgency: data.urgency,
-        userEmail: 'crew@heronsquare.co.za' // Default crew email
+        userEmail: 'crew@heronsquare.co.za', // Default crew email
+        imageFile: data.imageFile // Include image file if provided
       };
       
       // Use the existing issue service to submit

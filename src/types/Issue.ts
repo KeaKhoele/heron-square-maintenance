@@ -10,6 +10,7 @@ export interface Issue {
   status: 'New' | 'In Process' | 'Complete';
   timestamp: string;
   userEmail: string;
+  imageUrl?: string;
 }
 
 export interface IssueFormData {
@@ -21,4 +22,6 @@ export interface IssueFormData {
   description: string;
   urgency: 'High' | 'Medium' | 'Low';
   userEmail: string;
+  creatorUid?: string;
+  imageFile?: File;
 }

@@ -1,18 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Upload } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { propertyService } from '../services/propertyService';
-
-interface IssueFormData {
-  name: string;
-  address: string;
-  unit: string;
-  category: 'Plumbing' | 'Electrical' | 'Appliances' | 'Structural' | 'General';
-  issueType: string;
-  description: string;
-  urgency: 'High' | 'Medium' | 'Low';
-  userEmail: string;
-}
+import { IssueFormData } from '../types/Issue';
+import { validateImageFile } from '../services/imageService';
 
 interface IssueFormProps {
   onSubmit: (data: IssueFormData) => Promise<void>;
@@ -39,15 +30,23 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
     issueType: '',
     description: '',
     urgency: 'Medium',
-    userEmail: currentUser?.email || ''
+    userEmail: currentUser?.email || '',
+    creatorUid: currentUser?.uid
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Update userEmail when currentUser changes
   useEffect(() => {
-    if (currentUser?.email) {
-      setFormData(prev => ({ ...prev, userEmail: currentUser.email || '' }));
+    if (currentUser) {
+      setFormData(prev => ({
+        ...prev,
+        userEmail: currentUser.email || prev.userEmail,
+        creatorUid: currentUser.uid || prev.creatorUid,
+      }));
     }
-  }, [currentUser?.email]);
+  }, [currentUser]);
 
   // Load properties on component mount
   useEffect(() => {
@@ -62,6 +61,39 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
 
   const [errors, setErrors] = useState<Partial<Record<keyof IssueFormData, string>>>({});
   const [loading, setLoading] = useState(false);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
+      setImageError(validation.error || 'Invalid image file');
+      setImagePreview(null);
+      setFormData(prev => ({ ...prev, imageFile: undefined }));
+      return;
+    }
+
+    setImageError(null);
+    setFormData(prev => ({ ...prev, imageFile: file }));
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview(null);
+    setImageError(null);
+    setFormData(prev => ({ ...prev, imageFile: undefined }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof IssueFormData, string>> = {};
@@ -237,6 +269,49 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
               <option value="Medium">Medium</option>
               <option value="High">High</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Photo (Optional)</label>
+            <div className="space-y-2">
+              {!imagePreview ? (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">PNG, JPG up to 3MB</p>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              ) : (
+                <div className="relative">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    aria-label="Remove image"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+              {imageError && (
+                <p className="text-sm text-red-600">{imageError}</p>
+              )}
+            </div>
           </div>
 
           <div className="flex space-x-3 pt-4">

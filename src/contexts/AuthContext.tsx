@@ -1,21 +1,19 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { 
   User, 
-  signInWithEmailLink, 
-  isSignInWithEmailLink,
-  sendSignInLinkToEmail,
   signOut, 
-  onAuthStateChanged
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 
 interface AuthContextType {
   currentUser: User | null;
-  sendMagicLink: (email: string) => Promise<void>;
-  completeSignIn: () => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
-  magicLinkSent: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,124 +33,8 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
-  // Check if user is returning from magic link
-  useEffect(() => {
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      // User clicked magic link, complete sign in
-      completeSignIn();
-    }
-  }, []);
-
-  async function sendMagicLink(email: string) {
-    try {
-      console.log('Attempting to send magic link to:', email);
-      console.log('Firebase auth instance:', auth);
-      
-      const actionCodeSettings = {
-        url: window.location.origin + '/dashboard',
-        handleCodeInApp: true,
-        iOS: {
-          bundleId: 'com.heronsquare.maintenance'
-        },
-        android: {
-          packageName: 'com.heronsquare.maintenance',
-          installApp: true
-        },
-        dynamicLinkDomain: undefined
-      };
-      
-      console.log('Action code settings:', actionCodeSettings);
-
-      await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      
-      // Save email to localStorage for later use
-      window.localStorage.setItem('emailForSignIn', email);
-      
-      setMagicLinkSent(true);
-      console.log('Magic link sent successfully');
-    } catch (error: any) {
-      console.error('Detailed error sending magic link:', error);
-      console.error('Error code:', error.code);
-      console.error('Error message:', error.message);
-      console.error('Error details:', error);
-      
-      // Provide more specific error messages
-      let errorMessage = 'Failed to send magic link. Please try again.';
-      
-      if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Please enter a valid email address.';
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Too many attempts. Please wait a moment and try again.';
-      } else if (error.code === 'auth/network-request-failed') {
-        errorMessage = 'Network error. Please check your connection and try again.';
-      } else if (error.code === 'auth/quota-exceeded') {
-        errorMessage = 'Daily quota exceeded. Please upgrade your Firebase plan to Blaze (Pay as you go) to continue.';
-      } else if (error.code === 'auth/operation-not-allowed') {
-        errorMessage = 'Passwordless sign-in is not enabled. Please contact support.';
-      } else if (error.code === 'auth/invalid-action-code') {
-        errorMessage = 'Invalid action code. Please try again.';
-      }
-      
-      // Add specific message for academic/enterprise emails
-      if (email.includes('@myuct.ac.za') || email.includes('.edu') || email.includes('.ac.')) {
-        errorMessage += ' Note: Some academic/enterprise email providers may block magic links. Please check your spam folder or contact your IT department.';
-      }
-      
-      throw new Error(errorMessage);
-    }
-  }
-
-  async function completeSignIn() {
-    try {
-      const email = window.localStorage.getItem('emailForSignIn');
-      if (!email) {
-        // Try sessionStorage as fallback for mobile
-        const sessionEmail = sessionStorage.getItem('emailForSignIn');
-        if (!sessionEmail) {
-          throw new Error('No email found. Please try signing in again.');
-        }
-        // Use session email and sync to localStorage
-        window.localStorage.setItem('emailForSignIn', sessionEmail);
-      }
-
-      const currentEmail = window.localStorage.getItem('emailForSignIn') || email;
-      
-      if (!currentEmail) {
-        throw new Error('No email found. Please try signing in again.');
-      }
-      
-      console.log('Completing sign in for email:', currentEmail);
-      
-      await signInWithEmailLink(auth, currentEmail, window.location.href);
-      
-      // Clear email from both storages
-      window.localStorage.removeItem('emailForSignIn');
-      sessionStorage.removeItem('emailForSignIn');
-      
-      // User is now signed in
-      console.log('Sign in completed successfully');
-      
-      // Force a small delay to ensure Firebase state is updated
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirect to dashboard if not already there
-      if (window.location.pathname !== '/dashboard') {
-        // Use window.location.href for more reliable navigation
-        window.location.href = '/dashboard';
-      }
-      
-    } catch (error: any) {
-      console.error('Error completing sign in:', error);
-      throw new Error('Failed to complete sign in. Please try again.');
-    }
-  }
-
-  async function logout() {
-    return signOut(auth);
-  }
-
+  // Listen for Firebase auth state changes
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -162,13 +44,80 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return unsubscribe;
   }, []);
 
+  async function signIn(email: string, password: string): Promise<void> {
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      console.log('User signed in:', normalizedEmail);
+    } catch (error: any) {
+      console.error('Sign in error:', error);
+      
+      let errorMessage = 'Failed to sign in. Please try again.';
+      
+      if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled. Please contact support.';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email. Please sign up first.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please wait a moment and try again.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      throw new Error(errorMessage);
+    }
+  }
+
+  async function signUp(email: string, password: string): Promise<void> {
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+      
+      // Validate password strength
+      if (password.length < 6) {
+        throw new Error('Password must be at least 6 characters long.');
+      }
+      
+      await createUserWithEmailAndPassword(auth, normalizedEmail, password);
+      console.log('User signed up:', normalizedEmail);
+    } catch (error: any) {
+      console.error('Sign up error:', error);
+      
+      let errorMessage = 'Failed to create account. Please try again.';
+      
+      if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists. Please sign in instead.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please choose a stronger password.';
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      throw new Error(errorMessage);
+    }
+  }
+
+  async function logout(): Promise<void> {
+    try {
+      await signOut(auth);
+      setCurrentUser(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+      throw new Error('Failed to sign out. Please try again.');
+    }
+  }
+
   const value = {
     currentUser,
-    sendMagicLink,
-    completeSignIn,
+    signIn,
+    signUp,
     logout,
-    loading,
-    magicLinkSent
+    loading
   };
 
   return (

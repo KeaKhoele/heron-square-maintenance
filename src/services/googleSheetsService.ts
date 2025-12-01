@@ -250,7 +250,7 @@ export class GoogleSheetsService {
           const hasIssueIdColumn = row[0] && !row[1]?.includes('Category') && row.length > 10;
           
           if (hasIssueIdColumn) {
-            // New format: Issue ID in column A
+            // New format: Issue ID in column A, Image URL in column L (index 11)
             return {
               id: row[0] || this.generateUniqueId(), // Issue ID column
               timestamp: this.convertCustomFormatToISO(row[9] || this.getCapeTownTimestampForSheets()), // Date and Time column
@@ -262,7 +262,8 @@ export class GoogleSheetsService {
               description: row[3] || '', // Issue Description column
               urgency: (row[7] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
               status: (row[8] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
-              userEmail: row[10] || '' // User Email column
+              userEmail: row[10] || '', // User Email column
+              imageUrl: row[11] || undefined // Image URL column (optional)
             };
           } else {
             // Old format: No Issue ID column, generate one
@@ -277,7 +278,8 @@ export class GoogleSheetsService {
               description: row[2] || '', // Issue Description column
               urgency: (row[6] as 'High' | 'Medium' | 'Low') || 'Medium', // Urgency column
               status: (row[7] as 'New' | 'In Process' | 'Complete') || 'New', // Status column
-              userEmail: row[9] || '' // User Email column
+              userEmail: row[9] || '', // User Email column
+              imageUrl: row[10] || undefined // Image URL column (optional, for old format)
             };
           }
         });
@@ -385,7 +387,8 @@ export class GoogleSheetsService {
             newIssue.urgency, // Urgency
             newIssue.status, // Status
             timestampForSheets, // Date and Time (custom format for Google Sheets)
-            newIssue.userEmail // User Email
+            newIssue.userEmail, // User Email
+            newIssue.imageUrl || '' // Image URL (column L, index 11)
           ];
 
           console.log('Row data to submit:', rowData);
@@ -422,9 +425,9 @@ export class GoogleSheetsService {
 
           console.log('Inserting new issue at row:', insertRow);
 
-          // Insert the new row at the correct position
+          // Insert the new row at the correct position (now includes image URL column L)
           const response = await fetch(
-            `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A${insertRow}:K${insertRow}?valueInputOption=RAW`,
+            `${GOOGLE_SHEETS_BASE_URL}/${SPREADSHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}!A${insertRow}:L${insertRow}?valueInputOption=RAW`,
             {
               method: 'PUT',
               headers: {

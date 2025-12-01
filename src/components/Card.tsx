@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { X, Image as ImageIcon } from 'lucide-react';
 
 interface CardProps {
   children: React.ReactNode;
@@ -50,6 +51,7 @@ interface IssueCardProps {
     urgency: 'High' | 'Medium' | 'Low';
     status: 'New' | 'In Process' | 'Complete';
     timestamp: string;
+    imageUrl?: string;
   };
   onStatusChange?: (issueId: string, currentStatus: 'New' | 'In Process' | 'Complete') => void;
   canEditStatus?: boolean;
@@ -60,6 +62,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   onStatusChange,
   canEditStatus = false
 }) => {
+  const [showImageModal, setShowImageModal] = useState(false);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Complete':
@@ -123,6 +126,25 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           </p>
         )}
         
+        {issue.imageUrl && (
+          <div className="mb-2">
+            <button
+              onClick={() => setShowImageModal(true)}
+              className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-300 hover:border-blue-500 transition-colors group"
+              aria-label="View image"
+            >
+              <img
+                src={issue.imageUrl}
+                alt="Issue photo"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center">
+                <ImageIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </button>
+          </div>
+        )}
+        
         <div className="flex items-center justify-between">
           <span className={`px-2 py-1 rounded-md text-xs font-medium ${getUrgencyColor(issue.urgency)}`}>
             {issue.urgency} Priority
@@ -159,6 +181,30 @@ export const IssueCard: React.FC<IssueCardProps> = ({
               Reopen Issue
             </button>
           )}
+        </div>
+      )}
+
+      {/* Image Lightbox Modal */}
+      {showImageModal && issue.imageUrl && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowImageModal(false)}
+        >
+          <div className="relative max-w-4xl max-h-full">
+            <button
+              onClick={() => setShowImageModal(false)}
+              className="absolute top-4 right-4 p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full text-white transition-colors z-10"
+              aria-label="Close image"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <img
+              src={issue.imageUrl}
+              alt="Issue photo"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
         </div>
       )}
     </Card>

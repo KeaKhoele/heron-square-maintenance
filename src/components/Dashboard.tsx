@@ -7,7 +7,7 @@ import OfflineIndicator from './OfflineIndicator';
 import AnimatedButton from './AnimatedButton';
 import Card, { IssueCard } from './Card';
 import EmptyState from './EmptyState';
-import { Issue } from '../types/Issue';
+import { Issue, IssueFormData } from '../types/Issue';
 import { submitIssue, getUserIssues } from '../services/issueService';
 import { useErrorHandler } from '../utils/errorHandling';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -37,11 +37,12 @@ const Dashboard: React.FC = () => {
     loadUserIssues();
   }, [loadUserIssues]);
 
-  const handleSubmitIssue = async (issueData: Omit<Issue, 'id' | 'timestamp' | 'status'>) => {
+  const handleSubmitIssue = async (formData: IssueFormData) => {
     try {
       const newIssue = await submitIssue({
-        ...issueData,
-        userEmail: currentUser?.email || '',
+        ...formData,
+        userEmail: currentUser?.email || formData.userEmail,
+        creatorUid: currentUser?.uid || formData.creatorUid,
       });
       setIssues(prev => [newIssue, ...prev]);
       setShowIssueForm(false);

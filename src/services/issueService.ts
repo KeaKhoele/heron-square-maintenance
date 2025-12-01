@@ -1,7 +1,9 @@
-import { Issue } from '../types/Issue';
+import { Issue, IssueFormData } from '../types/Issue';
 import { googleSheetsService } from './googleSheetsService';
 import { emailService } from './emailService';
 import { handleError, retryWithBackoff, waitForOnline } from '../utils/errorHandling';
+import { uploadIssuePhoto } from './imageService';
+import { auth } from '../config/firebase';
 
 // Network status tracking
 let isOnline = navigator.onLine;
@@ -84,25 +86,50 @@ const safeLocalStorage = {
 };
 
 // Main issue service functions - now using Google Sheets as primary source
-export const submitIssue = async (issueData: Omit<Issue, 'id' | 'timestamp' | 'status'>): Promise<Issue> => {
+export const submitIssue = async (formData: IssueFormData): Promise<Issue> => {
+  let imageUrl: string | undefined;
   try {
     // Validate input data
-    if (!issueData.name?.trim()) {
+    if (!formData.name?.trim()) {
       throw handleError(new Error('Name is required'), 'submitIssue');
     }
-    if (!issueData.address?.trim()) {
+    if (!formData.address?.trim()) {
       throw handleError(new Error('Address is required'), 'submitIssue');
     }
-    if (!issueData.unit?.trim()) {
+    if (!formData.unit?.trim()) {
       throw handleError(new Error('Unit is required'), 'submitIssue');
     }
-    if (!issueData.userEmail?.trim()) {
+    if (!formData.userEmail?.trim()) {
       throw handleError(new Error('User email is required'), 'submitIssue');
     }
 
+    // Generate issue ID first (needed for image upload path)
+    const issueId = Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+    
+    // Upload image if provided
+    if (formData.imageFile) {
+      try {
+        const currentUser = auth.currentUser;
+        const uploadResult = await uploadIssuePhoto(formData.imageFile, issueId, currentUser || undefined);
+        imageUrl = uploadResult?.url;
+        console.log('Image uploaded successfully:', imageUrl);
+      } catch (imageError) {
+        console.error('Image upload failed:', imageError);
+        // Continue without image - don't block issue submission
+        throw handleError(new Error(`Image upload failed: ${imageError instanceof Error ? imageError.message : 'Unknown error'}`), 'submitIssue');
+      }
+    }
+
+    // Prepare issue data (excluding imageFile)
+    const { imageFile, ...issueData } = formData;
+    const issueDataWithImage: Omit<Issue, 'id' | 'timestamp' | 'status'> = {
+      ...issueData,
+      imageUrl,
+    };
+
     // Use Google Sheets service as primary with retry logic
     const newIssue = await retryWithBackoff(
-      () => googleSheetsService.submitIssue(issueData),
+      () => googleSheetsService.submitIssue(issueDataWithImage),
       3,
       1000
     );
@@ -129,11 +156,13 @@ export const submitIssue = async (issueData: Omit<Issue, 'id' | 'timestamp' | 's
     const appError = handleError(error, 'submitIssue');
     
     // Fallback to localStorage
+    const { imageFile, ...issueDataWithoutFile } = formData;
     const newIssue: Issue = {
-      ...issueData,
+      ...issueDataWithoutFile,
       id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
       timestamp: new Date().toISOString(),
-      status: 'New'
+      status: 'New',
+      imageUrl: imageUrl // Include imageUrl if upload succeeded before error
     };
     
     // Store in localStorage as backup
@@ -143,7 +172,7 @@ export const submitIssue = async (issueData: Omit<Issue, 'id' | 'timestamp' | 's
     
     // Queue for later if offline
     if (!isOnline) {
-      offlineQueue.push({ action: 'submitIssue', data: issueData });
+      offlineQueue.push({ action: 'submitIssue', data: formData });
     }
     
     // Re-throw the error for the UI to handle
