@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { propertyService } from '../services/propertyService';
-import { Building2, Wrench, Mail, Lock, UserPlus } from 'lucide-react';
+import { Building2, Wrench, Lock, UserPlus } from 'lucide-react';
 
 const Home: React.FC = () => {
   const [email, setEmail] = useState('');

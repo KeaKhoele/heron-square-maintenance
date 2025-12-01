@@ -3,7 +3,6 @@ import { storage } from '../config/firebase';
 import imageCompression from 'browser-image-compression';
 
 const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB in bytes
-const TARGET_SIZE = 2.5 * 1024 * 1024; // 2.5MB target size
 
 export interface ImageUploadResult {
   url: string;

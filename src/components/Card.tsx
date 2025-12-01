@@ -135,7 +135,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             >
               <img
                 src={issue.imageUrl}
-                alt="Issue photo"
+                alt="Issue"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity flex items-center justify-center">
@@ -200,7 +200,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
             </button>
             <img
               src={issue.imageUrl}
-              alt="Issue photo"
+              alt="Issue"
               className="max-w-full max-h-[90vh] object-contain rounded-lg"
               onClick={(e) => e.stopPropagation()}
             />
