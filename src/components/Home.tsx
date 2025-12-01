@@ -45,7 +45,15 @@ const Home: React.FC = () => {
       // Navigate to dashboard on success
       navigate('/dashboard');
     } catch (error: any) {
-      setError(error.message || `Failed to ${isSignUp ? 'sign up' : 'sign in'}`);
+      const errorMessage = error.message || `Failed to ${isSignUp ? 'sign up' : 'sign in'}`;
+      setError(errorMessage);
+      
+      // If email already exists, switch to sign-in tab
+      if (error.code === 'auth/email-already-in-use' || errorMessage.includes('already exists')) {
+        setIsSignUp(false);
+        setError('An account with this email already exists. Please sign in instead.');
+      }
+      
       setLoading(false);
     }
   };

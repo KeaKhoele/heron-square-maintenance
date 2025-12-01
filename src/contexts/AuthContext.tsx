@@ -60,8 +60,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         errorMessage = 'This account has been disabled. Please contact support.';
       } else if (error.code === 'auth/user-not-found') {
         errorMessage = 'No account found with this email. Please sign up first.';
-      } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = 'Incorrect email or password. Please try again.';
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = 'Too many failed attempts. Please wait a moment and try again.';
       } else if (error.code === 'auth/network-request-failed') {
