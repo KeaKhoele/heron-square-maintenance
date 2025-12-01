@@ -45,11 +45,6 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
       return;
     }
 
-    if (!newTenant.propertyId) {
-      showError('Validation Error', 'Please select a property');
-      return;
-    }
-
     try {
       // Use empty property/unit since tenants select these when submitting issues
       propertyService.addTenant(
