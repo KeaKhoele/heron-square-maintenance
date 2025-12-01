@@ -20,7 +20,7 @@ import AnimatedButton from './AnimatedButton';
 import Card, { IssueCard } from './Card';
 import EmptyState, { StatsCard } from './EmptyState';
 import { getAllIssues, updateIssueStatus, submitIssue } from '../services/issueService';
-import { Issue } from '../types/Issue';
+import { Issue, IssueFormData } from '../types/Issue';
 import { useErrorHandler } from '../utils/errorHandling';
 import { useNotifications } from '../contexts/NotificationContext';
 import { clearAllCaches } from '../services/googleSheetsService';
