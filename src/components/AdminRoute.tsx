@@ -14,13 +14,8 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   console.log('AdminRoute - isSecondaryCrew:', isSecondaryCrew);
   console.log('AdminRoute - isTenant:', isTenant);
   
-  // Block tenants from accessing crew features
-  if (isTenant) {
-    console.log('AdminRoute - Tenant detected, redirecting to /');
-    return <Navigate to="/" replace />;
-  }
-  
   // Check if user has a crew session
+  // Allow access even if user also has tenant session (for testing both roles)
   if (!crewSession) {
     console.log('AdminRoute - No crew session, redirecting to /crew-signin');
     return <Navigate to="/crew-signin" replace />;

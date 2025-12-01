@@ -19,12 +19,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
-  // Block crew members from accessing tenant features
-  if (isCrewMember) {
-    return <Navigate to="/crew-signin" replace />;
-  }
-
   // Require Firebase authentication (email/password)
+  // Allow access even if user also has crew session (for testing both roles)
   if (!currentUser) {
     return <Navigate to="/" replace />;
   }
