@@ -11,6 +11,10 @@ import { Issue, IssueFormData } from '../types/Issue';
 import { submitIssue, getUserIssues } from '../services/issueService';
 import { useErrorHandler } from '../utils/errorHandling';
 import { useNotifications } from '../contexts/NotificationContext';
+import { propertyService } from '../services/propertyService';
+
+// Pre-initialize propertyService on Dashboard load to speed up form opening
+propertyService.getAllProperties();
 
 const Dashboard: React.FC = () => {
   const { currentUser, logout } = useAuth();
