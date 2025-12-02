@@ -19,14 +19,23 @@ const ISSUE_CATEGORIES = {
   General: ['Pest infestation', 'Security concern (lock, gate, alarm)', 'Noise complaint', 'Other']
 } as const;
 
+// Pre-initialize properties outside component for instant access
+const getCachedProperties = (() => {
+  let cached: Array<{id: string, address: string, units: number}> | null = null;
+  return () => {
+    if (!cached) {
+      cached = propertyService.getAllProperties();
+    }
+    return cached;
+  };
+})();
+
 const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
   const { currentUser } = useAuth();
-  // Load properties immediately (synchronous, fast)
-  const [properties] = useState<Array<{id: string, address: string, units: number}>>(() => {
-    return propertyService.getAllProperties();
-  });
+  // Use cached properties (instant, no re-computation)
+  const [properties] = useState<Array<{id: string, address: string, units: number}>>(() => getCachedProperties());
   const [formData, setFormData] = useState<IssueFormData>(() => {
-    const loadedProperties = propertyService.getAllProperties();
+    const loadedProperties = getCachedProperties();
     return {
       name: '',
       address: loadedProperties.length > 0 ? loadedProperties[0].address : '',
