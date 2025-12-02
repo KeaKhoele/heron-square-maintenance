@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LogOut, AlertCircle } from 'lucide-react';
-const IssueForm = lazy(() => import('./IssueForm'));
 import OfflineIndicator from './OfflineIndicator';
 import AnimatedButton from './AnimatedButton';
 import Card, { IssueCard } from './Card';
@@ -12,6 +11,8 @@ import { submitIssue, getUserIssues } from '../services/issueService';
 import { useErrorHandler } from '../utils/errorHandling';
 import { useNotifications } from '../contexts/NotificationContext';
 import { propertyService } from '../services/propertyService';
+
+const IssueForm = lazy(() => import('./IssueForm'));
 
 // Pre-initialize propertyService on Dashboard load to speed up form opening
 propertyService.getAllProperties();
