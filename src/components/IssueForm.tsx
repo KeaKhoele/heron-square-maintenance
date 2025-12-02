@@ -34,7 +34,7 @@ const getCachedProperties = (() => {
 const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true }) => {
   const { currentUser } = useAuth();
   // Use pre-initialized cached properties (instant, no computation)
-  const properties = CACHED_PROPERTIES;
+  const properties = getCachedProperties();
   
   const getInitialFormData = () => {
     return {
