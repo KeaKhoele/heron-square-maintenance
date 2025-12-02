@@ -8,6 +8,7 @@ interface CardProps {
   hover?: boolean;
   padding?: 'sm' | 'md' | 'lg';
   shadow?: 'sm' | 'md' | 'lg';
+  onClick?: () => void;
 }
 
 const Card: React.FC<CardProps> = ({
@@ -15,7 +16,8 @@ const Card: React.FC<CardProps> = ({
   className = '',
   hover = false,
   padding = 'md',
-  shadow = 'md'
+  shadow = 'md',
+  onClick
 }) => {
   const baseClasses = 'bg-white rounded-xl border border-gray-200';
   
@@ -34,7 +36,10 @@ const Card: React.FC<CardProps> = ({
   const hoverClasses = hover ? 'cursor-pointer' : '';
 
   return (
-    <div className={`${baseClasses} ${paddingClasses[padding]} ${shadowClasses[shadow]} ${hoverClasses} ${className}`}>
+    <div 
+      className={`${baseClasses} ${paddingClasses[padding]} ${shadowClasses[shadow]} ${hoverClasses} ${className}`}
+      onClick={onClick}
+    >
       {children}
     </div>
   );
