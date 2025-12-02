@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Upload } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { propertyService } from '../services/propertyService';
@@ -36,7 +36,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true 
   // Use pre-initialized cached properties (instant, no computation)
   const properties = getCachedProperties();
   
-  const getInitialFormData = () => {
+  const getInitialFormData = useCallback(() => {
     return {
       name: '',
       address: properties.length > 0 ? properties[0].address : '',
@@ -48,7 +48,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true 
       userEmail: currentUser?.email || '',
       creatorUid: currentUser?.uid
     };
-  };
+  }, [currentUser, properties]);
   
   const [formData, setFormData] = useState<IssueFormData>(getInitialFormData);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -70,7 +70,7 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true 
       }
     }
     prevIsOpenRef.current = isOpen;
-  }, [isOpen]);
+  }, [isOpen, getInitialFormData]);
   
   // Update userEmail when currentUser changes (only if different to avoid unnecessary updates)
   useEffect(() => {
