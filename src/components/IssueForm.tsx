@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { X, Upload } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { propertyService } from '../services/propertyService';
