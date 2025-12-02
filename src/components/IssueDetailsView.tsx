@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, Clock, MessageSquare, Image as ImageIcon, User, MapPin, Calendar, AlertCircle } from 'lucide-react';
 import { Issue, IssueNote } from '../types/Issue';
 import { useAccessControl } from '../contexts/AccessControlContext';
@@ -25,18 +25,18 @@ const IssueDetailsView: React.FC<IssueDetailsViewProps> = ({
   const [showImageModal, setShowImageModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadNotes();
-  }, [issue.id]);
-
-  const loadNotes = async () => {
+  const loadNotes = useCallback(async () => {
     try {
       const issueNotes = await getIssueNotes(issue.id);
       setNotes(issueNotes);
     } catch (error) {
       console.error('Error loading notes:', error);
     }
-  };
+  }, [issue.id]);
+
+  useEffect(() => {
+    loadNotes();
+  }, [loadNotes]);
 
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
