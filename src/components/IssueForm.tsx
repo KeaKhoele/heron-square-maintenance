@@ -55,19 +55,22 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true 
   const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset form when opened (optimized - only reset if actually opening)
+  // Reset form when opened (optimized - use setTimeout to avoid blocking render)
   const prevIsOpenRef = useRef(isOpen);
   useEffect(() => {
     // Only reset when transitioning from closed to open
     if (isOpen && !prevIsOpenRef.current) {
-      const initialData = getInitialFormData();
-      setFormData(initialData);
-      setImagePreview(null);
-      setImageError(null);
-      setErrors({});
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+      // Use setTimeout to defer state updates and avoid blocking the visual display
+      setTimeout(() => {
+        const initialData = getInitialFormData();
+        setFormData(initialData);
+        setImagePreview(null);
+        setImageError(null);
+        setErrors({});
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }, 0);
     }
     prevIsOpenRef.current = isOpen;
   }, [isOpen, getInitialFormData]);
