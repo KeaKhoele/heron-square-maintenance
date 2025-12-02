@@ -364,4 +364,5 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true 
   );
 };
 
-export default IssueForm;
+// Memoize component to prevent unnecessary re-renders
+export default memo(IssueForm);
