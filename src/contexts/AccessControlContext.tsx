@@ -98,7 +98,40 @@ export function AccessControlProvider({ children }: AccessControlProviderProps) 
   // Check for existing crew session on mount
   useEffect(() => {
     const checkCrewSession = () => {
-      // Try localStorage first
+      // If user is signed in as tenant via Firebase, don't auto-load crew session
+      // Crew session should only be active when explicitly signing in as crew
+      // This allows users to have both roles but keeps them separate
+      if (currentUser) {
+        // User is signed in as tenant - only load crew session if it matches current user
+        // and was set via crew sign-in (not auto-detected)
+        const storedCrewMember = localStorage.getItem('crewMember');
+        if (storedCrewMember) {
+          try {
+            const crewMember = JSON.parse(storedCrewMember);
+            // Only set crew session if it matches current user AND was explicitly set
+            // (we check this by seeing if it's also in sessionStorage, which is set during crew sign-in)
+            const sessionCrewMember = sessionStorage.getItem('crewMember');
+            if (sessionCrewMember && crewMember.email === currentUser.email) {
+              console.log('User has active crew session:', crewMember);
+              setCrewSession(crewMember);
+              return;
+            } else {
+              // User signed in as tenant, clear any stale crew session
+              console.log('User signed in as tenant, clearing crew session');
+              setCrewSession(null);
+              return;
+            }
+          } catch (error) {
+            console.error('Error parsing localStorage crew member:', error);
+            localStorage.removeItem('crewMember');
+          }
+        } else {
+          setCrewSession(null);
+        }
+        return;
+      }
+      
+      // No Firebase auth - check for crew session (for crew-only access)
       const storedCrewMember = localStorage.getItem('crewMember');
       console.log('Checking for stored crew member:', storedCrewMember);
       
@@ -132,7 +165,7 @@ export function AccessControlProvider({ children }: AccessControlProviderProps) 
       }
     };
 
-    // Check on mount
+    // Check on mount and when currentUser changes
     checkCrewSession();
 
     // Listen for storage changes (when crew session is updated)
@@ -157,7 +190,7 @@ export function AccessControlProvider({ children }: AccessControlProviderProps) 
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('crewSessionUpdated', handleCrewSessionUpdate);
     };
-  }, []);
+  }, [currentUser]);
 
   // Get current user's access level - moved inside useMemo to fix dependency warning
   const currentUserLevel = useMemo(() => {
