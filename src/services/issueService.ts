@@ -1,4 +1,4 @@
-import { Issue, IssueFormData } from '../types/Issue';
+import { Issue, IssueFormData, IssueNote, StatusHistoryEntry } from '../types/Issue';
 import { googleSheetsService } from './googleSheetsService';
 import { emailService } from './emailService';
 import { handleError, retryWithBackoff, waitForOnline } from '../utils/errorHandling';
@@ -213,6 +213,24 @@ export const getAllIssues = async (): Promise<Issue[]> => {
 
 export const updateIssueStatus = async (issueId: string, status: 'New' | 'In Process' | 'Complete', userId: string = 'crew'): Promise<void> => {
   try {
+    // Add status history entry
+    const statusHistory = safeLocalStorage.get(`issue_${issueId}_history`) || [];
+    statusHistory.push({
+      status,
+      changedAt: new Date().toISOString(),
+      changedBy: userId
+    });
+    safeLocalStorage.set(`issue_${issueId}_history`, statusHistory);
+
+    // Update issue with status history
+    const existingIssues = safeLocalStorage.get('maintenance_issues') || [];
+    const updatedIssues = existingIssues.map((issue: Issue) => 
+      issue.id === issueId 
+        ? { ...issue, status, statusHistory: statusHistory.slice(-10) } // Keep last 10 entries
+        : issue
+    );
+    safeLocalStorage.set('maintenance_issues', updatedIssues);
+
     // Use Google Sheets service as primary
     await googleSheetsService.updateIssueStatus(issueId, status);
     
@@ -223,18 +241,50 @@ export const updateIssueStatus = async (issueId: string, status: 'New' | 'In Pro
   } catch (error) {
     console.error('Google Sheets update failed, falling back to localStorage:', error);
     
-    // Fallback to localStorage
-    const existingIssues = safeLocalStorage.get('maintenance_issues') || [];
-    const updatedIssues = existingIssues.map((issue: Issue) => 
-      issue.id === issueId ? { ...issue, status } : issue
-    );
-    safeLocalStorage.set('maintenance_issues', updatedIssues);
-    
+    // Fallback to localStorage (already updated above)
     // Queue for later if offline
     if (!isOnline) {
       offlineQueue.push({ action: 'updateStatus', data: { issueId, status } });
     }
   }
+};
+
+// Notes management
+export const addIssueNote = async (issueId: string, text: string, createdBy: string): Promise<void> => {
+  const note: IssueNote = {
+    id: Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9),
+    text,
+    createdAt: new Date().toISOString(),
+    createdBy,
+    createdByName: createdBy
+  };
+
+  const notes = safeLocalStorage.get(`issue_${issueId}_notes`) || [];
+  notes.push(note);
+  safeLocalStorage.set(`issue_${issueId}_notes`, notes);
+
+  // Also update the issue in the main list
+  const existingIssues = safeLocalStorage.get('maintenance_issues') || [];
+  const updatedIssues = existingIssues.map((issue: Issue) => 
+    issue.id === issueId 
+      ? { ...issue, notes: [...(issue.notes || []), note] }
+      : issue
+  );
+  safeLocalStorage.set('maintenance_issues', updatedIssues);
+};
+
+export const getIssueNotes = async (issueId: string): Promise<IssueNote[]> => {
+  const notes = safeLocalStorage.get(`issue_${issueId}_notes`) || [];
+  return notes.sort((a: IssueNote, b: IssueNote) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+};
+
+export const getIssueStatusHistory = async (issueId: string): Promise<StatusHistoryEntry[]> => {
+  const history = safeLocalStorage.get(`issue_${issueId}_history`) || [];
+  return history.sort((a: StatusHistoryEntry, b: StatusHistoryEntry) => 
+    new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime()
+  );
 };
 
 // Add function to refresh issues for crew members

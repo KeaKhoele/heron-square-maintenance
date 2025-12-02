@@ -19,7 +19,7 @@ import OfflineIndicator from './OfflineIndicator';
 import AnimatedButton from './AnimatedButton';
 import Card, { IssueCard } from './Card';
 import EmptyState, { StatsCard } from './EmptyState';
-import { getAllIssues, updateIssueStatus, submitIssue } from '../services/issueService';
+import { getAllIssues, updateIssueStatus, submitIssue, getIssueStatusHistory } from '../services/issueService';
 import { Issue, IssueFormData } from '../types/Issue';
 import { useErrorHandler } from '../utils/errorHandling';
 import { useNotifications } from '../contexts/NotificationContext';
@@ -177,11 +177,15 @@ const AdminDashboard: React.FC = () => {
         }
       }
 
-      await updateIssueStatus(issueId, newStatus);
+      const userId = crewSession?.email || crewSession?.name || currentUser?.email || 'crew';
+      await updateIssueStatus(issueId, newStatus, userId);
+      
+      // Reload status history for this issue
+      const history = await getIssueStatusHistory(issueId);
       
       // Update the local state immediately for instant feedback
       setIssues(prev => prev.map(issue => 
-        issue.id === issueId ? { ...issue, status: newStatus } : issue
+        issue.id === issueId ? { ...issue, status: newStatus, statusHistory: history } : issue
       ));
       
       showSuccess(

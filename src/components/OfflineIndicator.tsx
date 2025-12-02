@@ -1,67 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { Wifi, WifiOff, AlertCircle, CheckCircle } from 'lucide-react';
-import { getOfflineQueueLength } from '../services/issueService';
+import { WifiOff, Wifi } from 'lucide-react';
 
-interface OfflineIndicatorProps {
-  className?: string;
-}
-
-const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ className = '' }) => {
+const OfflineIndicator: React.FC = () => {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [offlineQueueLength, setOfflineQueueLength] = useState(0);
+  const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      setOfflineQueueLength(0);
+      setShowBanner(true);
+      setTimeout(() => setShowBanner(false), 3000);
     };
 
     const handleOffline = () => {
       setIsOnline(false);
+      setShowBanner(true);
     };
 
-    const updateQueueLength = () => {
-      setOfflineQueueLength(getOfflineQueueLength());
-    };
-
-    // Listen for network status changes
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
-    // Listen for queue updates
-    window.addEventListener('issueUpdated', updateQueueLength);
-    
-    // Update queue length periodically
-    const interval = setInterval(updateQueueLength, 2000);
+
+    // Check initial status
+    setIsOnline(navigator.onLine);
+    if (!navigator.onLine) {
+      setShowBanner(true);
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      window.removeEventListener('issueUpdated', updateQueueLength);
-      clearInterval(interval);
     };
   }, []);
 
-  if (isOnline) {
-    return (
-      <div className={`flex items-center space-x-2 px-3 py-2 bg-green-100 text-green-800 rounded-lg ${className}`}>
-        <Wifi className="h-4 w-4" />
-        <span className="text-sm font-medium">Online</span>
-        <CheckCircle className="h-4 w-4" />
-      </div>
-    );
-  }
+  if (!showBanner) return null;
 
   return (
-    <div className={`flex items-center space-x-2 px-3 py-2 bg-red-100 text-red-800 rounded-lg ${className}`}>
-      <WifiOff className="h-4 w-4" />
-      <span className="text-sm font-medium">Offline</span>
-      {offlineQueueLength > 0 && (
-        <div className="flex items-center space-x-1">
-          <AlertCircle className="h-4 w-4" />
-          <span className="text-sm font-medium">{offlineQueueLength} pending</span>
-        </div>
-      )}
+    <div
+      className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm font-medium transition-all duration-300 ${
+        isOnline
+          ? 'bg-green-500 text-white'
+          : 'bg-yellow-500 text-white'
+      }`}
+    >
+      <div className="flex items-center justify-center space-x-2">
+        {isOnline ? (
+          <>
+            <Wifi className="h-4 w-4" />
+            <span>Connection restored. Syncing changes...</span>
+          </>
+        ) : (
+          <>
+            <WifiOff className="h-4 w-4" />
+            <span>You're offline. Changes will be saved and synced when you're back online.</span>
+          </>
+        )}
+      </div>
     </div>
   );
 };

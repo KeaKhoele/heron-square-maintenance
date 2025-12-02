@@ -281,13 +281,14 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
                     <p className="mb-2 text-sm text-gray-500">
                       <span className="font-semibold">Click to upload</span> or drag and drop
                     </p>
-                    <p className="text-xs text-gray-500">PNG, JPG up to 3MB</p>
+                    <p className="text-xs text-gray-500">PNG, JPG up to 3MB • Camera supported</p>
                   </div>
                   <input
                     ref={fileInputRef}
                     type="file"
                     className="hidden"
                     accept="image/*"
+                    capture="environment"
                     onChange={handleImageChange}
                   />
                 </label>

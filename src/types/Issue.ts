@@ -11,6 +11,22 @@ export interface Issue {
   timestamp: string;
   userEmail: string;
   imageUrl?: string;
+  statusHistory?: StatusHistoryEntry[];
+  notes?: IssueNote[];
+}
+
+export interface StatusHistoryEntry {
+  status: 'New' | 'In Process' | 'Complete';
+  changedAt: string;
+  changedBy: string;
+}
+
+export interface IssueNote {
+  id: string;
+  text: string;
+  createdAt: string;
+  createdBy: string;
+  createdByName?: string;
 }
 
 export interface IssueFormData {

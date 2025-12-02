@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Image as ImageIcon } from 'lucide-react';
+import IssueDetailsView from './IssueDetailsView';
 
 interface CardProps {
   children: React.ReactNode;
@@ -63,6 +64,7 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   canEditStatus = false
 }) => {
   const [showImageModal, setShowImageModal] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Complete':
@@ -97,7 +99,8 @@ export const IssueCard: React.FC<IssueCardProps> = ({
   };
 
   return (
-    <Card hover={canEditStatus} className="group">
+    <>
+    <Card hover className="group cursor-pointer" onClick={() => setShowDetails(true)}>
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <h3 className="font-semibold text-gray-900 text-lg mb-1">
@@ -129,7 +132,10 @@ export const IssueCard: React.FC<IssueCardProps> = ({
         {issue.imageUrl && (
           <div className="mb-2">
             <button
-              onClick={() => setShowImageModal(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowImageModal(true);
+              }}
               className="relative w-full h-32 rounded-lg overflow-hidden border border-gray-300 hover:border-blue-500 transition-colors group"
               aria-label="View image"
             >
@@ -156,10 +162,13 @@ export const IssueCard: React.FC<IssueCardProps> = ({
       </div>
 
       {canEditStatus && onStatusChange && (
-        <div className="flex space-x-2 pt-3 border-t border-gray-100">
+        <div className="flex space-x-2 pt-3 border-t border-gray-100" onClick={(e) => e.stopPropagation()}>
           {issue.status === 'New' && (
             <button
-              onClick={() => onStatusChange(issue.id, issue.status)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(issue.id, issue.status);
+              }}
               className="flex-1 px-3 py-2 text-sm font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg"
             >
               Start Work
@@ -167,7 +176,10 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           )}
           {issue.status === 'In Process' && (
             <button
-              onClick={() => onStatusChange(issue.id, issue.status)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(issue.id, issue.status);
+              }}
               className="flex-1 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg"
             >
               Mark Complete
@@ -175,7 +187,10 @@ export const IssueCard: React.FC<IssueCardProps> = ({
           )}
           {issue.status === 'Complete' && (
             <button
-              onClick={() => onStatusChange(issue.id, issue.status)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onStatusChange(issue.id, issue.status);
+              }}
               className="flex-1 px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg"
             >
               Reopen Issue
@@ -208,6 +223,17 @@ export const IssueCard: React.FC<IssueCardProps> = ({
         </div>
       )}
     </Card>
+
+    {/* Issue Details Modal */}
+    {showDetails && (
+      <IssueDetailsView
+        issue={issue as any}
+        onClose={() => setShowDetails(false)}
+        onStatusChange={onStatusChange}
+        canEditStatus={canEditStatus}
+      />
+    )}
+    </>
   );
 };
 

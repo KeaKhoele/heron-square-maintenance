@@ -9,6 +9,7 @@ import CrewSignIn from './components/CrewSignIn';
 import AdminDashboard from './components/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import OfflineIndicator from './components/OfflineIndicator';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <NotificationProvider>
           <Router>
             <div className="App min-h-screen bg-gray-50">
+              <OfflineIndicator />
               <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/crew-signin" element={<CrewSignIn />} />
