@@ -158,10 +158,8 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true 
     return Array.from({ length: property.units }, (_, i) => `Unit ${i + 1}`);
   };
 
-  if (!isOpen) return null;
-  
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div className={`fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 ${isOpen ? '' : 'hidden'}`}>
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-medium text-gray-900">Log New Issue</h2>
