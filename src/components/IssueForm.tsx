@@ -8,6 +8,7 @@ import { validateImageFile } from '../services/imageService';
 interface IssueFormProps {
   onSubmit: (data: IssueFormData) => Promise<void>;
   onClose: () => void;
+  isOpen?: boolean;
 }
 
 
@@ -30,38 +31,55 @@ const getCachedProperties = (() => {
   };
 })();
 
-const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
+const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true }) => {
   const { currentUser } = useAuth();
   // Use cached properties (instant, no re-computation)
   const [properties] = useState<Array<{id: string, address: string, units: number}>>(() => getCachedProperties());
-  const [formData, setFormData] = useState<IssueFormData>(() => {
+  
+  const getInitialFormData = () => {
     const loadedProperties = getCachedProperties();
     return {
       name: '',
       address: loadedProperties.length > 0 ? loadedProperties[0].address : '',
       unit: '',
-      category: 'General',
+      category: 'General' as const,
       issueType: '',
       description: '',
-      urgency: 'Medium',
+      urgency: 'Medium' as const,
       userEmail: currentUser?.email || '',
       creatorUid: currentUser?.uid
     };
-  });
+  };
+  
+  const [formData, setFormData] = useState<IssueFormData>(getInitialFormData);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Update userEmail when currentUser changes
+  // Reset form when opened
   useEffect(() => {
-    if (currentUser) {
+    if (isOpen) {
+      const initialData = getInitialFormData();
+      setFormData(initialData);
+      setImagePreview(null);
+      setImageError(null);
+      setErrors({});
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  }, [isOpen, currentUser]);
+  
+  // Update userEmail when currentUser changes (only if different to avoid unnecessary updates)
+  useEffect(() => {
+    if (currentUser && (currentUser.email !== formData.userEmail || currentUser.uid !== formData.creatorUid)) {
       setFormData(prev => ({
         ...prev,
         userEmail: currentUser.email || prev.userEmail,
         creatorUid: currentUser.uid || prev.creatorUid,
       }));
     }
-  }, [currentUser]);
+  }, [currentUser, formData.userEmail, formData.creatorUid]);
 
   const [errors, setErrors] = useState<Partial<Record<keyof IssueFormData, string>>>({});
   const [loading, setLoading] = useState(false);
@@ -138,6 +156,8 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
     return Array.from({ length: property.units }, (_, i) => `Unit ${i + 1}`);
   };
 
+  if (!isOpen) return null;
+  
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
       <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
