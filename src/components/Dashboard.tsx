@@ -138,13 +138,13 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Issue Form Modal */}
-      {showIssueForm && (
+      {/* Issue Form Modal - Pre-mounted for instant display */}
+      <div className={showIssueForm ? '' : 'hidden'}>
         <IssueForm
           onSubmit={handleSubmitIssue}
           onClose={() => setShowIssueForm(false)}
         />
-      )}
+      </div>
     </div>
   );
 };
