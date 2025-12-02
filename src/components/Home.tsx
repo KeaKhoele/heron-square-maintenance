@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useAccessControl } from '../contexts/AccessControlContext';
 import { propertyService } from '../services/propertyService';
 import { Building2, Wrench, Lock, UserPlus } from 'lucide-react';
 
@@ -11,6 +12,7 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { signIn, signUp } = useAuth();
+  const { getCrewMembers } = useAccessControl();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -26,19 +28,31 @@ const Home: React.FC = () => {
       return;
     }
 
-    // For sign-up: allow if email is in tenant list (even if not active yet)
-    // For sign-in: require email to be authorized (active status)
+    // For sign-up: allow if email is in tenant list OR if email is a crew member (for testing)
+    // For sign-in: require email to be authorized (active status) OR crew member
     const normalizedEmail = email.trim().toLowerCase();
+    const crewMembers = getCrewMembers();
+    const isCrewMember = crewMembers.some(crew => crew.email.toLowerCase() === normalizedEmail);
+    
     if (isSignUp) {
-      // On sign-up, check if email exists in tenant list (any status)
+      // On sign-up, check if email exists in tenant list (any status) OR is a crew member
       const tenant = propertyService.getTenantByEmail(normalizedEmail);
-      if (!tenant) {
+      if (!tenant && !isCrewMember) {
         setError('This email is not authorized to access the tenant portal. Please contact the property manager to add your email.');
         return;
       }
+      // If crew member but not in tenant list, auto-add them as tenant
+      if (isCrewMember && !tenant) {
+        try {
+          propertyService.addTenant(normalizedEmail, crewMembers.find(c => c.email.toLowerCase() === normalizedEmail)?.name || 'Crew Member', '', '', 'system');
+        } catch (error) {
+          // If addTenant fails, continue anyway - crew members can still sign up
+          console.log('Could not auto-add crew member as tenant:', error);
+        }
+      }
     } else {
-      // On sign-in, require active status
-      if (!propertyService.isEmailAuthorized(normalizedEmail)) {
+      // On sign-in, require active status OR crew member
+      if (!propertyService.isEmailAuthorized(normalizedEmail) && !isCrewMember) {
         setError('This email is not authorized to access the tenant portal. Please contact the property manager.');
         return;
       }
