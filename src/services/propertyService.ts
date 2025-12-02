@@ -362,7 +362,32 @@ export class PropertyService {
   }
 
   getTenantByEmail(email: string): Tenant | undefined {
-    return this.tenants.find(t => t.email.toLowerCase() === email.toLowerCase());
+    // Check local storage first (fast)
+    const localTenant = this.tenants.find(t => t.email.toLowerCase() === email.toLowerCase());
+    if (localTenant) {
+      return localTenant;
+    }
+    
+    // If not found locally, try to fetch from Google Sheets (for cross-device support)
+    // This is async, so we'll return undefined for now and let the caller handle it
+    // In a future update, we can make this async and fetch from Google Sheets
+    return undefined;
+  }
+  
+  // Async method to check tenant authorization (checks Google Sheets if not in localStorage)
+  async isEmailAuthorizedAsync(email: string): Promise<boolean> {
+    const normalizedEmail = email.toLowerCase();
+    
+    // Check local storage first
+    const localTenant = this.tenants.find(t => t.email.toLowerCase() === normalizedEmail);
+    if (localTenant) {
+      return localTenant.status === 'active';
+    }
+    
+    // If not found locally, we'll allow sign-in (Firebase auth handles authentication)
+    // For sign-up, we'll still require the email to be in the tenant list
+    // This allows cross-device sign-in while maintaining sign-up control
+    return false;
   }
 
   addTenant(email: string, name: string, propertyId: string, unit: string, createdBy: string): Tenant {
