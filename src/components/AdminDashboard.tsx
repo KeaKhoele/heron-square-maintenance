@@ -24,6 +24,7 @@ import { Issue, IssueFormData } from '../types/Issue';
 import { useErrorHandler } from '../utils/errorHandling';
 import { useNotifications } from '../contexts/NotificationContext';
 import { clearAllCaches } from '../services/googleSheetsService';
+import { useAuth } from '../contexts/AuthContext';
 
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
