@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Plus, LogOut, AlertCircle } from 'lucide-react';
-import IssueForm from './IssueForm';
+const IssueForm = lazy(() => import('./IssueForm'));
 import OfflineIndicator from './OfflineIndicator';
 import AnimatedButton from './AnimatedButton';
 import Card, { IssueCard } from './Card';
@@ -138,13 +138,21 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Issue Form Modal - Pre-mounted for instant display */}
-      <div className={showIssueForm ? '' : 'hidden'}>
-        <IssueForm
-          onSubmit={handleSubmitIssue}
-          onClose={() => setShowIssueForm(false)}
-        />
-      </div>
+      {/* Issue Form Modal - Lazy loaded for performance */}
+      {showIssueForm && (
+        <Suspense fallback={
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          </div>
+        }>
+          <IssueForm
+            onSubmit={handleSubmitIssue}
+            onClose={() => setShowIssueForm(false)}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

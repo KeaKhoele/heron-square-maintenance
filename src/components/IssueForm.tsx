@@ -148,10 +148,6 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
           </button>
         </div>
 
-        {/* Debug info - remove this later */}
-        <div className="mb-4 p-2 bg-blue-100 text-blue-800 text-xs rounded">
-          Debug: IssueForm with Category and Type fields loaded
-        </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
