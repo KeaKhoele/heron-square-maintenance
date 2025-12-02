@@ -29,6 +29,7 @@ const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { handleAsyncError } = useErrorHandler();
   const { showSuccess, showError } = useNotifications();
+  const { currentUser } = useAuth();
   const { 
     currentUserLevel, 
     canManageUsers,
