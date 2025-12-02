@@ -28,14 +28,15 @@ const Home: React.FC = () => {
       return;
     }
 
-    // For sign-up: allow if email is in tenant list OR if email is a crew member (for testing)
-    // For sign-in: require email to be authorized (active status) OR crew member
+    // For sign-in: No authorization check needed - Firebase auth handles authentication
+    // Users can sign in on any device once they've created an account
+    // For sign-up: Allow if email is a crew member (for testing) OR if already in tenant list
     const normalizedEmail = email.trim().toLowerCase();
     const crewMembers = getCrewMembers();
     const isCrewMember = crewMembers.some(crew => crew.email.toLowerCase() === normalizedEmail);
     
     if (isSignUp) {
-      // On sign-up, check if email exists in tenant list (any status) OR is a crew member
+      // On sign-up, check if email is a crew member OR exists in tenant list
       const tenant = propertyService.getTenantByEmail(normalizedEmail);
       if (!tenant && !isCrewMember) {
         setError('This email is not authorized to access the tenant portal. Please contact the property manager to add your email.');
@@ -50,13 +51,9 @@ const Home: React.FC = () => {
           console.log('Could not auto-add crew member as tenant:', error);
         }
       }
-    } else {
-      // On sign-in, require active status OR crew member
-      if (!propertyService.isEmailAuthorized(normalizedEmail) && !isCrewMember) {
-        setError('This email is not authorized to access the tenant portal. Please contact the property manager.');
-        return;
-      }
     }
+    // For sign-in: No authorization check - Firebase auth is sufficient
+    // This allows tenants to sign in on any device once they've signed up
 
     try {
       setError('');
