@@ -56,9 +56,11 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true 
   const [imageError, setImageError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset form when opened
+  // Reset form when opened (optimized - only reset if actually opening)
+  const prevIsOpenRef = useRef(isOpen);
   useEffect(() => {
-    if (isOpen) {
+    // Only reset when transitioning from closed to open
+    if (isOpen && !prevIsOpenRef.current) {
       const initialData = getInitialFormData();
       setFormData(initialData);
       setImagePreview(null);
@@ -68,7 +70,8 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose, isOpen = true 
         fileInputRef.current.value = '';
       }
     }
-  }, [isOpen, currentUser]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen]);
   
   // Update userEmail when currentUser changes (only if different to avoid unnecessary updates)
   useEffect(() => {
