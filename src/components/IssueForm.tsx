@@ -21,17 +21,23 @@ const ISSUE_CATEGORIES = {
 
 const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
   const { currentUser } = useAuth();
-  const [properties, setProperties] = useState<Array<{id: string, address: string, units: number}>>([]);
-  const [formData, setFormData] = useState<IssueFormData>({
-    name: '',
-    address: '',
-    unit: '',
-    category: 'General',
-    issueType: '',
-    description: '',
-    urgency: 'Medium',
-    userEmail: currentUser?.email || '',
-    creatorUid: currentUser?.uid
+  // Load properties immediately (synchronous, fast)
+  const [properties] = useState<Array<{id: string, address: string, units: number}>>(() => {
+    return propertyService.getAllProperties();
+  });
+  const [formData, setFormData] = useState<IssueFormData>(() => {
+    const loadedProperties = propertyService.getAllProperties();
+    return {
+      name: '',
+      address: loadedProperties.length > 0 ? loadedProperties[0].address : '',
+      unit: '',
+      category: 'General',
+      issueType: '',
+      description: '',
+      urgency: 'Medium',
+      userEmail: currentUser?.email || '',
+      creatorUid: currentUser?.uid
+    };
   });
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
@@ -47,17 +53,6 @@ const IssueForm: React.FC<IssueFormProps> = ({ onSubmit, onClose }) => {
       }));
     }
   }, [currentUser]);
-
-  // Load properties on component mount
-  useEffect(() => {
-    // Ensure properties are refreshed
-    propertyService.refreshProperties();
-    const loadedProperties = propertyService.getAllProperties();
-    setProperties(loadedProperties);
-    if (loadedProperties.length > 0) {
-      setFormData(prev => ({ ...prev, address: loadedProperties[0].address }));
-    }
-  }, []);
 
   const [errors, setErrors] = useState<Partial<Record<keyof IssueFormData, string>>>({});
   const [loading, setLoading] = useState(false);
