@@ -26,10 +26,22 @@ const Home: React.FC = () => {
       return;
     }
 
-    // Check if email is authorized (for both sign-in and sign-up)
-    if (!propertyService.isEmailAuthorized(email)) {
-      setError('This email is not authorized to access the tenant portal. Please contact the property manager.');
-      return;
+    // For sign-up: allow if email is in tenant list (even if not active yet)
+    // For sign-in: require email to be authorized (active status)
+    const normalizedEmail = email.trim().toLowerCase();
+    if (isSignUp) {
+      // On sign-up, check if email exists in tenant list (any status)
+      const tenant = propertyService.getTenantByEmail(normalizedEmail);
+      if (!tenant) {
+        setError('This email is not authorized to access the tenant portal. Please contact the property manager to add your email.');
+        return;
+      }
+    } else {
+      // On sign-in, require active status
+      if (!propertyService.isEmailAuthorized(normalizedEmail)) {
+        setError('This email is not authorized to access the tenant portal. Please contact the property manager.');
+        return;
+      }
     }
 
     try {
