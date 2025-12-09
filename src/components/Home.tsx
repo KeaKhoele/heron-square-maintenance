@@ -36,19 +36,23 @@ const Home: React.FC = () => {
     const isCrewMember = crewMembers.some(crew => crew.email.toLowerCase() === normalizedEmail);
     
     if (isSignUp) {
-      // On sign-up, check if email is a crew member OR exists in tenant list
-      const tenant = propertyService.getTenantByEmail(normalizedEmail);
-      if (!tenant && !isCrewMember) {
-        setError('This email is not authorized to access the tenant portal. Please contact the property manager to add your email.');
+      // On sign-up, check if email is a crew member OR exists in tenant list (check Google Sheets for cross-device support)
+      const isAuthorized = await propertyService.isEmailAuthorizedAsync(normalizedEmail);
+      if (!isAuthorized && !isCrewMember) {
+        setError('This email is not authorized to access the tenant portal. Please contact the property manager to add your email via Tenant Management.');
+        setLoading(false);
         return;
       }
       // If crew member but not in tenant list, auto-add them as tenant
-      if (isCrewMember && !tenant) {
-        try {
-          propertyService.addTenant(normalizedEmail, crewMembers.find(c => c.email.toLowerCase() === normalizedEmail)?.name || 'Crew Member', '', '', 'system');
-        } catch (error) {
-          // If addTenant fails, continue anyway - crew members can still sign up
-          console.log('Could not auto-add crew member as tenant:', error);
+      if (isCrewMember) {
+        const tenant = await propertyService.getTenantByEmailAsync(normalizedEmail);
+        if (!tenant) {
+          try {
+            await propertyService.addTenant(normalizedEmail, crewMembers.find(c => c.email.toLowerCase() === normalizedEmail)?.name || 'Crew Member', '', '', 'system');
+          } catch (error) {
+            // If addTenant fails, continue anyway - crew members can still sign up
+            console.log('Could not auto-add crew member as tenant:', error);
+          }
         }
       }
     }

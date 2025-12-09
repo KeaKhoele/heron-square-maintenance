@@ -1,4 +1,5 @@
 import { Property, Tenant, PropertyWithTenants } from '../types/Property';
+import { googleSheetsService } from './googleSheetsService';
 
 // Property management service
 export class PropertyService {
@@ -16,6 +17,42 @@ export class PropertyService {
   constructor() {
     this.loadFromStorage();
     this.initializeDefaultProperties();
+    // Sync tenants from Google Sheets on initialization (non-blocking)
+    this.syncTenantsFromSheets().catch(error => {
+      console.error('Error syncing tenants from Google Sheets:', error);
+    });
+  }
+
+  /**
+   * Sync tenants from Google Sheets (for cross-device support)
+   * Public method so components can trigger manual sync
+   */
+  async syncTenantsFromSheets(): Promise<void> {
+    try {
+      const sheetsTenants = await googleSheetsService.fetchTenants();
+      if (sheetsTenants.length > 0) {
+        // Merge with local tenants (Google Sheets takes precedence for conflicts)
+        const mergedTenants = [...this.tenants];
+        
+        sheetsTenants.forEach(sheetsTenant => {
+          const existingIndex = mergedTenants.findIndex(t => t.id === sheetsTenant.id || t.email.toLowerCase() === sheetsTenant.email.toLowerCase());
+          if (existingIndex >= 0) {
+            // Update existing tenant
+            mergedTenants[existingIndex] = sheetsTenant;
+          } else {
+            // Add new tenant from Google Sheets
+            mergedTenants.push(sheetsTenant);
+          }
+        });
+        
+        this.tenants = mergedTenants;
+        this.saveToStorage();
+        console.log(`Synced ${sheetsTenants.length} tenants from Google Sheets`);
+      }
+    } catch (error) {
+      console.error('Error syncing tenants from Google Sheets:', error);
+      // Continue with local tenants if sync fails
+    }
   }
 
   // Initialize default properties if none exist
@@ -363,36 +400,53 @@ export class PropertyService {
 
   getTenantByEmail(email: string): Tenant | undefined {
     // Check local storage first (fast)
-    const localTenant = this.tenants.find(t => t.email.toLowerCase() === email.toLowerCase());
+    // Note: For cross-device support, use getTenantByEmailAsync() instead
+    return this.tenants.find(t => t.email.toLowerCase() === email.toLowerCase());
+  }
+  
+  /**
+   * Async method to get tenant by email, fetching from Google Sheets if not found locally
+   * This enables cross-device tenant authorization
+   */
+  async getTenantByEmailAsync(email: string): Promise<Tenant | undefined> {
+    const normalizedEmail = email.toLowerCase();
+    
+    // Check local storage first (fast)
+    const localTenant = this.tenants.find(t => t.email.toLowerCase() === normalizedEmail);
     if (localTenant) {
       return localTenant;
     }
     
-    // If not found locally, try to fetch from Google Sheets (for cross-device support)
-    // This is async, so we'll return undefined for now and let the caller handle it
-    // In a future update, we can make this async and fetch from Google Sheets
+    // If not found locally, fetch from Google Sheets
+    try {
+      const sheetsTenants = await googleSheetsService.fetchTenants();
+      const sheetsTenant = sheetsTenants.find(t => t.email.toLowerCase() === normalizedEmail);
+      
+      if (sheetsTenant) {
+        // Add to local cache for future lookups
+        this.tenants.push(sheetsTenant);
+        this.saveToStorage();
+        return sheetsTenant;
+      }
+    } catch (error) {
+      console.error('Error fetching tenant from Google Sheets:', error);
+      // Return undefined if fetch fails
+    }
+    
     return undefined;
   }
   
-  // Async method to check tenant authorization (checks Google Sheets if not in localStorage)
+  /**
+   * Async method to check tenant authorization (checks Google Sheets if not in localStorage)
+   */
   async isEmailAuthorizedAsync(email: string): Promise<boolean> {
-    const normalizedEmail = email.toLowerCase();
-    
-    // Check local storage first
-    const localTenant = this.tenants.find(t => t.email.toLowerCase() === normalizedEmail);
-    if (localTenant) {
-      return localTenant.status === 'active';
-    }
-    
-    // If not found locally, we'll allow sign-in (Firebase auth handles authentication)
-    // For sign-up, we'll still require the email to be in the tenant list
-    // This allows cross-device sign-in while maintaining sign-up control
-    return false;
+    const tenant = await this.getTenantByEmailAsync(email);
+    return tenant ? tenant.status === 'active' : false;
   }
 
-  addTenant(email: string, name: string, propertyId: string, unit: string, createdBy: string): Tenant {
-    // Check if tenant already exists
-    const existingTenant = this.getTenantByEmail(email);
+  async addTenant(email: string, name: string, propertyId: string, unit: string, createdBy: string): Promise<Tenant> {
+    // Check if tenant already exists (check both local and Google Sheets)
+    const existingTenant = await this.getTenantByEmailAsync(email);
     if (existingTenant) {
       throw new Error('Tenant with this email already exists');
     }
@@ -410,7 +464,7 @@ export class PropertyService {
     }
 
     const newTenant: Tenant = {
-      id: `tenant-${Date.now()}`,
+      id: `tenant-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       email: email.toLowerCase(),
       name,
       propertyId,
@@ -421,26 +475,61 @@ export class PropertyService {
       createdBy
     };
 
+    // Add to local storage
     this.tenants.push(newTenant);
     this.saveToStorage();
+    
+    // Sync to Google Sheets (non-blocking)
+    googleSheetsService.addTenantToSheets(newTenant).catch(error => {
+      console.error('Error syncing tenant to Google Sheets:', error);
+      // Continue even if sync fails - tenant is saved locally
+    });
+    
     return newTenant;
   }
 
-  removeTenant(id: string): boolean {
+  async removeTenant(id: string): Promise<boolean> {
     const index = this.tenants.findIndex(t => t.id === id);
     if (index === -1) return false;
 
-    this.tenants.splice(index, 1);
+    const tenant = this.tenants[index];
+    
+    // Instead of deleting, mark as inactive (for historical record)
+    // This allows cross-device sync and maintains data integrity
+    const updatedTenant = {
+      ...tenant,
+      status: 'inactive' as const,
+      moveOutDate: new Date().toISOString()
+    };
+    
+    this.tenants[index] = updatedTenant;
     this.saveToStorage();
+    
+    // Sync status change to Google Sheets (non-blocking)
+    googleSheetsService.updateTenantStatusInSheets(id, 'inactive').catch(error => {
+      console.error('Error syncing tenant removal to Google Sheets:', error);
+      // Continue even if sync fails - tenant is updated locally
+    });
+    
     return true;
   }
 
-  updateTenant(id: string, updates: Partial<Tenant>): boolean {
+  async updateTenant(id: string, updates: Partial<Tenant>): Promise<boolean> {
     const index = this.tenants.findIndex(t => t.id === id);
     if (index === -1) return false;
 
-    this.tenants[index] = { ...this.tenants[index], ...updates };
+    const updatedTenant = { ...this.tenants[index], ...updates };
+    this.tenants[index] = updatedTenant;
     this.saveToStorage();
+    
+    // If status changed, sync to Google Sheets
+    if (updates.status) {
+      googleSheetsService.updateTenantStatusInSheets(id, updates.status).catch(error => {
+        console.error('Error syncing tenant update to Google Sheets:', error);
+        // Continue even if sync fails - tenant is updated locally
+      });
+    }
+    
     return true;
   }
 
@@ -453,6 +542,7 @@ export class PropertyService {
   }
 
   // Check if email is authorized (for tenant access)
+  // Note: For cross-device support, use isEmailAuthorizedAsync() instead
   isEmailAuthorized(email: string): boolean {
     const tenant = this.getTenantByEmail(email);
     return tenant ? tenant.status === 'active' : false;

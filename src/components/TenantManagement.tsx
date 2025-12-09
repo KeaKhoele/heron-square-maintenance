@@ -22,12 +22,19 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
     loadTenants();
   }, []);
 
-  const loadTenants = () => {
-    const allTenants = propertyService.getAllTenants();
+  const loadTenants = async () => {
+    // Refresh from Google Sheets to get latest data (for cross-device sync)
+    try {
+      await propertyService.syncTenantsFromSheets();
+    } catch (error) {
+      console.error('Error syncing tenants:', error);
+    }
+    // Filter to show only active tenants
+    const allTenants = propertyService.getAllTenants().filter(t => t.status === 'active');
     setTenants(allTenants);
   };
 
-  const handleAddTenant = () => {
+  const handleAddTenant = async () => {
     if (!newTenant.name.trim()) {
       showError('Validation Error', 'Please enter a tenant name');
       return;
@@ -47,7 +54,7 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
 
     try {
       // Use empty property/unit since tenants select these when submitting issues
-      propertyService.addTenant(
+      await propertyService.addTenant(
         newTenant.email,
         newTenant.name,
         '', // Property will be selected when tenant submits issues
@@ -64,22 +71,22 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onClose }) => {
     }
   };
 
-  const handleRemoveTenant = (tenantId: string) => {
+  const handleRemoveTenant = async (tenantId: string) => {
     // For now, we'll use a simple confirmation approach
     // In a production app, you might want to implement a custom confirmation modal
     const confirmed = window.confirm('Are you sure you want to remove this tenant?');
     if (!confirmed) return;
     
     try {
-      const success = propertyService.removeTenant(tenantId);
+      const success = await propertyService.removeTenant(tenantId);
       if (success) {
         loadTenants();
         showSuccess('Success', 'Tenant removed successfully!');
       } else {
         showError('Remove Tenant Failed', 'Failed to remove tenant');
       }
-    } catch (error) {
-      showError('Remove Tenant Failed', `Error removing tenant: ${error}`);
+    } catch (error: any) {
+      showError('Remove Tenant Failed', error.message || `Error removing tenant: ${error}`);
     }
   };
 
